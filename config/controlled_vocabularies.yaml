@@ -1,0 +1,62 @@
+study_type:
+  - simulation
+  - measured
+  - hybrid
+  - review
+  - unclear
+
+source_type:
+  - text
+  - table
+  - figure
+  - mixed
+  - not_found
+
+record_status:
+  - pending
+  - pre_extracted
+  - extracted
+  - not_found
+  - unclear
+  - needs_digitization
+  - blocked
+  - human_review_required
+  - validated
+  - rejected
+
+building_typology:
+  - residential
+  - office
+  - school
+  - hospital
+  - commercial
+  - mixed_use
+  - prototype
+  - other
+  - unclear
+
+intervention_type:
+  - insulation
+  - glazing
+  - shading
+  - ventilation
+  - hvac
+  - passive_design
+  - renewable_energy
+  - controls
+  - envelope
+  - package
+  - other
+  - unclear
+
+effect_direction:
+  - increase
+  - reduction
+  - neutral
+  - unclear
+
+review_decision:
+  - accepted
+  - corrected
+  - rejected
+  - unclear

@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClassificationOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "study_type",
+    "is_extractable",
+    "has_simulation",
+    "has_numeric_outcomes",
+    "has_tables",
+    "has_figures",
+    "has_multiple_scenarios",
+    "reason",
+    "status",
+    "human_review_required"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string"
+    },
+    "study_type": {
+      "type": "string",
+      "enum": [
+        "simulation",
+        "measured",
+        "hybrid",
+        "review",
+        "unclear"
+      ]
+    },
+    "is_extractable": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "has_simulation": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "has_numeric_outcomes": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "has_tables": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "has_figures": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "has_multiple_scenarios": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "simulation_software": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "page",
+          "evidence_text"
+        ],
+        "properties": {
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "evidence_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready_for_mapping",
+        "not_extractable",
+        "needs_human_review",
+        "unclear"
+      ]
+    },
+    "human_review_required": {
+      "type": "boolean"
+    }
+  }
+}

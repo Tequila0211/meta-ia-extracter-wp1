@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ScenarioExtractionOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "scenarios"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string"
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenario_temp_id",
+          "scenario_label",
+          "building_typology",
+          "climate_location",
+          "climate_zone",
+          "weather_file",
+          "simulation_software",
+          "baseline_description",
+          "intervention_description",
+          "intervention_type",
+          "is_package",
+          "package_components",
+          "reported_outcomes",
+          "page",
+          "source_type",
+          "evidence_text",
+          "status",
+          "human_review_required"
+        ],
+        "properties": {
+          "scenario_temp_id": {
+            "type": "string"
+          },
+          "scenario_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "building_typology": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "climate_location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "climate_zone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "weather_file": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "simulation_software": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "baseline_description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "intervention_description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "intervention_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_package": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "package_components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reported_outcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "page": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "text",
+              "table",
+              "figure",
+              "mixed",
+              "not_found",
+              null
+            ]
+          },
+          "evidence_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "extracted",
+              "not_found",
+              "unclear",
+              "blocked"
+            ]
+          },
+          "human_review_required": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

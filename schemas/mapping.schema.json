@@ -1,0 +1,236 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MappingOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "article_summary",
+    "scenario_inventory",
+    "relevant_tables",
+    "relevant_figures",
+    "mapping_warnings"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string"
+    },
+    "article_summary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scenario_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenario_temp_id",
+          "scenario_label",
+          "building_typology",
+          "climate_location",
+          "climate_zone",
+          "baseline_present",
+          "intervention_present",
+          "intervention_summary",
+          "reported_outcomes",
+          "evidence",
+          "status",
+          "uncertainty"
+        ],
+        "properties": {
+          "scenario_temp_id": {
+            "type": "string"
+          },
+          "scenario_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "building_typology": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "climate_location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "climate_zone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "baseline_present": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "intervention_present": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "intervention_summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reported_outcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "page",
+              "source_type",
+              "table_or_figure",
+              "evidence_text"
+            ],
+            "properties": {
+              "page": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "source_type": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "text",
+                  "table",
+                  "figure",
+                  "mixed",
+                  "not_found",
+                  null
+                ]
+              },
+              "table_or_figure": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "evidence_text": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "mapped",
+              "unclear",
+              "not_found"
+            ]
+          },
+          "uncertainty": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          }
+        }
+      }
+    },
+    "relevant_tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "page",
+          "label",
+          "reason"
+        ],
+        "properties": {
+          "page": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "relevant_figures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "page",
+          "label",
+          "reason",
+          "requires_digitization"
+        ],
+        "properties": {
+          "page": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requires_digitization": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "mapping_warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

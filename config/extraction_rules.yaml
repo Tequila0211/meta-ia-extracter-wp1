@@ -1,0 +1,59 @@
+rules:
+  no_guessing:
+    enabled: true
+    description: "If evidence is not explicit, return null and status not_found or unclear."
+
+  evidence_required_for_critical_fields:
+    enabled: true
+    action_if_missing: "block"
+
+  page_required_for_extracted_values:
+    enabled: true
+    action_if_missing: "block"
+
+  unit_required_for_numeric_outcomes:
+    enabled: true
+    action_if_missing: "block"
+
+  figure_values_require_digitization:
+    enabled: true
+    action_if_violation: "set_needs_digitization"
+
+  baseline_intervention_pair_required:
+    enabled: true
+    action_if_missing: "unclear"
+
+  do_not_split_packages_without_explicit_reporting:
+    enabled: true
+    action_if_violation: "block"
+
+  do_not_mix_scenarios:
+    enabled: true
+    action_if_violation: "block"
+
+  raw_ai_output_must_be_saved:
+    enabled: true
+
+  human_validation_required_for_critical_fields:
+    enabled: true
+
+blocking_conditions:
+  - name: "missing_page"
+    condition: "status == extracted and page is null"
+    action: "block"
+
+  - name: "missing_evidence"
+    condition: "critical == true and evidence_text is null and crop_path is null"
+    action: "block"
+
+  - name: "missing_numeric_unit"
+    condition: "numeric_value_present == true and unit is null"
+    action: "block"
+
+  - name: "figure_without_digitization"
+    condition: "source_type == figure and needs_digitization == false"
+    action: "set_needs_digitization"
+
+  - name: "unknown_codebook_field"
+    condition: "field_name not in codebook"
+    action: "reject"

@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AuditOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "audit_status",
+    "issues",
+    "fields_to_block",
+    "records_ready_for_review"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string"
+    },
+    "audit_status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "minor_issues",
+        "major_issues"
+      ]
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "severity",
+          "issue_type",
+          "affected_record",
+          "description",
+          "required_action"
+        ],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "issue_type": {
+            "type": "string",
+            "enum": [
+              "missing_evidence",
+              "missing_unit",
+              "missing_page",
+              "scenario_mixing",
+              "unsupported_inference",
+              "digitization_needed",
+              "duplicate_outcome",
+              "ambiguous_baseline",
+              "package_split_error",
+              "unknown_field",
+              "other"
+            ]
+          },
+          "affected_record": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "required_action": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "fields_to_block": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "records_ready_for_review": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

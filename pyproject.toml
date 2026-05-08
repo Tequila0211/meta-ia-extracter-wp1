@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meta-ai-extraction-pipeline"
+version = "0.1.0"
+description = "Local AI-assisted extraction pipeline for systematic review and meta-analysis."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "pymupdf>=1.24.0",
+    "pandas>=2.1.0",
+    "openpyxl>=3.1.0",
+    "pydantic>=2.5.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "google-genai>=1.0.0",
+    "sqlalchemy>=2.0.0",
+    "typer>=0.12.0",
+    "rich>=13.0.0",
+    "jsonschema>=4.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+]
+
+[project.scripts]
+meta-pipeline = "src.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

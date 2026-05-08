@@ -1,0 +1,271 @@
+codebook:
+  version: "v01"
+  description: "Codebook for AI-assisted extraction of building simulation studies for systematic review/meta-analysis."
+
+fields:
+
+  - field_name: article_title
+    entity_level: article
+    label: "Article title"
+    definition: "Full title of the article."
+    data_type: string
+    required: true
+    critical: false
+    evidence_required: false
+    human_validation_required: false
+
+  - field_name: authors
+    entity_level: article
+    label: "Authors"
+    definition: "Authors of the article."
+    data_type: string
+    required: true
+    critical: false
+    evidence_required: false
+    human_validation_required: false
+
+  - field_name: publication_year
+    entity_level: article
+    label: "Publication year"
+    definition: "Year of publication."
+    data_type: integer
+    required: true
+    critical: false
+    evidence_required: false
+    human_validation_required: false
+
+  - field_name: doi
+    entity_level: article
+    label: "DOI"
+    definition: "Digital Object Identifier if reported."
+    data_type: string
+    required: false
+    critical: false
+    evidence_required: false
+    human_validation_required: false
+
+  - field_name: study_type
+    entity_level: article
+    label: "Study type"
+    definition: "Type of study design."
+    data_type: categorical
+    allowed_values:
+      - simulation
+      - measured
+      - hybrid
+      - review
+      - unclear
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: simulation_software
+    entity_level: article
+    label: "Simulation software"
+    definition: "Software or engine used for building performance simulation."
+    data_type: string
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    extraction_instruction: "Extract only software explicitly mentioned, e.g., EnergyPlus, DesignBuilder, TRNSYS, IESVE, OpenStudio."
+
+  - field_name: scenario_label
+    entity_level: scenario
+    label: "Scenario label"
+    definition: "Label or description of a specific simulation scenario, case, alternative, or model."
+    data_type: string
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: building_typology
+    entity_level: scenario
+    label: "Building typology"
+    definition: "Main building type evaluated in the scenario."
+    data_type: categorical
+    allowed_values:
+      - residential
+      - office
+      - school
+      - hospital
+      - commercial
+      - mixed_use
+      - prototype
+      - other
+      - unclear
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: climate_location
+    entity_level: scenario
+    label: "Climate location"
+    definition: "City, country, region, or climate location used in the scenario."
+    data_type: string
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: climate_zone
+    entity_level: scenario
+    label: "Climate zone"
+    definition: "Climate classification if explicitly reported."
+    data_type: string
+    required: false
+    critical: false
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: weather_file
+    entity_level: scenario
+    label: "Weather file"
+    definition: "Weather file or climate dataset used in the simulation."
+    data_type: string
+    required: false
+    critical: false
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: baseline_description
+    entity_level: scenario
+    label: "Baseline description"
+    definition: "Description of the reference, control, or base case scenario."
+    data_type: string
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: intervention_description
+    entity_level: intervention
+    label: "Intervention description"
+    definition: "Description of the evaluated strategy, measure, or package."
+    data_type: string
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: intervention_type
+    entity_level: intervention
+    label: "Intervention type"
+    definition: "Type of strategy evaluated."
+    data_type: categorical
+    allowed_values:
+      - insulation
+      - glazing
+      - shading
+      - ventilation
+      - hvac
+      - passive_design
+      - renewable_energy
+      - controls
+      - envelope
+      - package
+      - other
+      - unclear
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: is_package
+    entity_level: intervention
+    label: "Is package"
+    definition: "Whether the intervention combines multiple strategies."
+    data_type: boolean
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    extraction_instruction: "If the paper reports a combined package, do not separate individual effects unless explicitly reported."
+
+  - field_name: cooling_demand
+    entity_level: outcome
+    label: "Cooling demand"
+    definition: "Cooling energy demand for a specific scenario."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "kWh/m2.year"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    allowed_source_types:
+      - text
+      - table
+      - figure
+    extraction_instruction: "Extract only if cooling demand is explicitly reported. Do not infer from total energy use."
+
+  - field_name: heating_demand
+    entity_level: outcome
+    label: "Heating demand"
+    definition: "Heating energy demand for a specific scenario."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "kWh/m2.year"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    allowed_source_types:
+      - text
+      - table
+      - figure
+
+  - field_name: total_energy_use
+    entity_level: outcome
+    label: "Total energy use"
+    definition: "Total building energy use, consumption, or demand."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "kWh/m2.year"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    allowed_source_types:
+      - text
+      - table
+      - figure
+
+  - field_name: carbon_emissions
+    entity_level: outcome
+    label: "Carbon emissions"
+    definition: "Operational carbon emissions or equivalent emissions."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "kgCO2/m2.year"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: discomfort_hours
+    entity_level: outcome
+    label: "Discomfort hours"
+    definition: "Number of hours outside thermal comfort range."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "h/year"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: indoor_temperature
+    entity_level: outcome
+    label: "Indoor temperature"
+    definition: "Reported indoor temperature outcome."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "degC"
+    required: false
+    critical: false
+    evidence_required: true
+    human_validation_required: true

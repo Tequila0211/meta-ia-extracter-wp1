@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OutcomeExtractionOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "extracted_outcomes"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string"
+    },
+    "extracted_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "outcome_temp_id",
+          "scenario_temp_id",
+          "outcome_name",
+          "baseline_value",
+          "baseline_unit",
+          "intervention_value",
+          "intervention_unit",
+          "reported_effect_value",
+          "reported_effect_unit",
+          "effect_direction",
+          "source_type",
+          "page",
+          "table_or_figure",
+          "row_label",
+          "column_label_baseline",
+          "column_label_intervention",
+          "evidence_text",
+          "needs_digitization",
+          "status",
+          "human_review_required"
+        ],
+        "properties": {
+          "outcome_temp_id": {
+            "type": "string"
+          },
+          "scenario_temp_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "outcome_name": {
+            "type": "string"
+          },
+          "baseline_value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "baseline_unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "intervention_value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "intervention_unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reported_effect_value": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "reported_effect_unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effect_direction": {
+            "type": "string",
+            "enum": [
+              "increase",
+              "reduction",
+              "neutral",
+              "unclear"
+            ]
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "table",
+              "figure",
+              "mixed",
+              "not_found"
+            ]
+          },
+          "page": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "table_or_figure": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "row_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "column_label_baseline": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "column_label_intervention": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "needs_digitization": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "extracted",
+              "not_found",
+              "unclear",
+              "needs_digitization",
+              "blocked"
+            ]
+          },
+          "human_review_required": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

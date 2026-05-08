@@ -1,0 +1,53 @@
+project:
+  name: "meta_ai_extraction_pipeline"
+  version: "0.1.0"
+  language: "es"
+  description: "Local AI-assisted extraction pipeline for systematic review and meta-analysis."
+
+paths:
+  raw_pdfs: "data/00_raw_pdfs"
+  processed: "data/01_processed"
+  ai_outputs: "data/02_ai_outputs"
+  human_review: "data/03_human_review"
+  frozen_datasets: "data/04_frozen_datasets"
+  logs: "data/05_logs"
+  database: "data/project.sqlite"
+
+workflow:
+  process_mode: "article_by_article"
+  require_human_validation: true
+  allow_batch_processing: false
+  default_articles_per_session: 1
+
+ai:
+  provider: "gemini"
+  fast_model_env: "GEMINI_MODEL_FAST"
+  pro_model_env: "GEMINI_MODEL_PRO"
+  use_structured_outputs: true
+  save_raw_outputs: true
+  max_retries: 2
+  timeout_seconds: 300
+  use_multimodal: true
+
+task_models:
+  classification: "fast"
+  mapping: "fast"
+  scenario_extraction: "fast"
+  outcome_extraction: "fast"
+  audit: "fast"
+
+documents:
+  allowed_extensions:
+    - ".pdf"
+  assign_document_codes: true
+  document_code_prefix: "A"
+  document_code_padding: 3
+
+review:
+  export_excel: true
+  require_reviewer_name: true
+  valid_decisions:
+    - accepted
+    - corrected
+    - rejected
+    - unclear

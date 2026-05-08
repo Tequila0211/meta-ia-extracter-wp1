@@ -1,0 +1,43 @@
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# Database
+data/project.sqlite
+
+# Data directories (never commit raw data, AI outputs, reviews, frozen datasets, or logs)
+data/00_raw_pdfs/*
+data/01_processed/*
+data/02_ai_outputs/*
+data/03_human_review/*
+data/04_frozen_datasets/*
+data/05_logs/*
+
+# Keep directory structure
+!data/00_raw_pdfs/.gitkeep
+!data/01_processed/.gitkeep
+!data/02_ai_outputs/.gitkeep
+!data/03_human_review/.gitkeep
+!data/04_frozen_datasets/.gitkeep
+!data/05_logs/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
