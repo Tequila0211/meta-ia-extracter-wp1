@@ -20,19 +20,23 @@
           "outcome_temp_id",
           "scenario_temp_id",
           "outcome_name",
-          "baseline_value",
-          "baseline_unit",
-          "intervention_value",
-          "intervention_unit",
+          "metric_group",
+          "value",
+          "unit",
+          "room_or_space",
+          "occupant_group",
+          "comparison_baseline_scenario_id",
+          "comparison_baseline_value",
           "reported_effect_value",
           "reported_effect_unit",
           "effect_direction",
+          "extraction_method",
+          "confidence",
           "source_type",
           "page",
           "table_or_figure",
           "row_label",
-          "column_label_baseline",
-          "column_label_intervention",
+          "column_label",
           "evidence_text",
           "needs_digitization",
           "status",
@@ -40,52 +44,90 @@
         ],
         "properties": {
           "outcome_temp_id": {
-            "type": "string"
+            "type": "string",
+            "description": "Unique temporary ID for this outcome. Format: O001, O002, etc."
           },
           "scenario_temp_id": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "description": "MANDATORY: The scenario_temp_id from the scenario extraction step that this outcome belongs to. Every outcome MUST be linked to a scenario. If you cannot determine the scenario, create a new scenario entry or mark status as 'unclear'."
           },
           "outcome_name": {
-            "type": "string"
+            "type": "string",
+            "description": "Name of the metric being reported. Use codebook field names when possible: cooling_demand, heating_demand, total_energy_use, carbon_emissions, discomfort_hours, indoor_temperature, MPMV, HIHH, IOD, HE, WBGT, HI, etc."
           },
-          "baseline_value": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "baseline_unit": {
+          "metric_group": {
             "type": [
               "string",
               "null"
+            ],
+            "description": "Semantic category for this metric. Use: 'energy_demand', 'thermal_comfort', 'health_risk', 'thermal_resilience', 'indoor_environment', 'carbon_emissions', 'cost', 'other'.",
+            "enum": [
+              "energy_demand",
+              "thermal_comfort",
+              "health_risk",
+              "thermal_resilience",
+              "indoor_environment",
+              "carbon_emissions",
+              "cost",
+              "other",
+              null
             ]
           },
-          "intervention_value": {
+          "value": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "description": "The single numeric value reported for this outcome in this specific scenario. Extract one value per row. Do NOT pair baseline/intervention values in the same record."
           },
-          "intervention_unit": {
+          "unit": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Unit of the reported value. Use original units as reported in the article."
+          },
+          "room_or_space": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Specific room, zone, or spatial unit the value refers to. Examples: 'bedroom', 'greatroom', 'living_room', 'whole_building', 'zone_1'. Null if the value applies to the whole building or is not space-specific."
+          },
+          "occupant_group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The occupant population group this value applies to. Examples: 'elderly', 'non_elderly', 'children', 'general', 'not_applicable'. Null if the article does not differentiate by occupant group."
+          },
+          "comparison_baseline_scenario_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "If this outcome is being explicitly compared to a baseline, provide the scenario_temp_id of that baseline scenario. Null if no explicit comparison is being made."
+          },
+          "comparison_baseline_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The baseline value this outcome is explicitly compared against, if such a comparison exists in the article. Null if no paired comparison is reported."
           },
           "reported_effect_value": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "description": "The difference or effect size as explicitly reported by the article (e.g., percentage reduction). Null if no effect is explicitly reported. Do NOT calculate this yourself."
           },
           "reported_effect_unit": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Unit of the reported effect. Examples: '%', 'kWh/m2', 'hours'. Null if no effect reported."
           },
           "effect_direction": {
             "type": "string",
@@ -93,8 +135,31 @@
               "increase",
               "reduction",
               "neutral",
-              "unclear"
-            ]
+              "unclear",
+              "not_applicable"
+            ],
+            "description": "Direction of the effect. Use 'not_applicable' when the outcome is a standalone value with no comparison."
+          },
+          "extraction_method": {
+            "type": "string",
+            "enum": [
+              "text",
+              "table",
+              "figure_visual_confident",
+              "figure_visual_approximate",
+              "calculated",
+              "not_extracted"
+            ],
+            "description": "How the value was obtained. 'text': from article text. 'table': from a data table. 'figure_visual_confident': read from figure with high confidence. 'figure_visual_approximate': read from figure but approximate. 'calculated': derived by calculation. 'not_extracted': value could not be extracted."
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "Confidence in the extracted value. 'high': from text or clear table. 'medium': from figure read with reasonable accuracy. 'low': approximate or uncertain."
           },
           "source_type": {
             "type": "string",
@@ -124,17 +189,12 @@
               "null"
             ]
           },
-          "column_label_baseline": {
+          "column_label": {
             "type": [
               "string",
               "null"
-            ]
-          },
-          "column_label_intervention": {
-            "type": [
-              "string",
-              "null"
-            ]
+            ],
+            "description": "Column header or label in the source table/figure that contains this value."
           },
           "evidence_text": {
             "type": [
@@ -143,17 +203,20 @@
             ]
           },
           "needs_digitization": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True ONLY if the value could not be read from a figure and requires manual digitization. If you were able to read the value (even approximately), set to false."
           },
           "status": {
             "type": "string",
             "enum": [
               "extracted",
+              "extracted_approximate",
               "not_found",
               "unclear",
               "needs_digitization",
               "blocked"
-            ]
+            ],
+            "description": "'extracted': value confidently obtained. 'extracted_approximate': value read but approximate (e.g., from figure). 'not_found': value not in article. 'unclear': ambiguous. 'needs_digitization': requires manual digitization (value must be null). 'blocked': extraction blocked by a rule."
           },
           "human_review_required": {
             "type": "boolean"

@@ -20,7 +20,7 @@ from src.database.repository import (
 )
 from src.ingestion.preprocessing import preprocess_document
 from src.utils.logging_config import get_logger
-from src.validation.business_rules import check_outcome_rules
+from src.utils.paths import get_document_ai_output_dir
 from src.validation.schema_validator import validate_json_file
 
 logger = get_logger("workflow")
@@ -98,7 +98,6 @@ def process_article(document_code: str) -> dict:
                     return result
 
                 # Validate schema
-                from src.utils.paths import get_document_ai_output_dir
                 cls_path = get_document_ai_output_dir(document_code) / "classification.json"
                 val = validate_json_file(cls_path, "classification.schema.json")
                 if not val:
@@ -159,11 +158,37 @@ def process_article(document_code: str) -> dict:
             try:
                 out_result = run_outcome_extraction(document_code)
                 if not out_result["success"]:
-                    result["errors"].append(f"Outcome extraction failed: {out_result['error']}")
+                    err = f"Outcome extraction failed: {out_result['error']}"
+                    result["errors"].append(err)
+                    logger.error(err)
+                    _set_failed(document_code)
+                    result["final_status"] = "failed"
+                    return result
+
+                out_path = get_document_ai_output_dir(document_code) / "outcome_extraction.json"
+                if not out_path.exists():
+                    err = f"Outcome extraction did not produce output file: {out_path.name}"
+                    result["errors"].append(err)
+                    logger.error(err)
+                    _set_failed(document_code)
+                    result["final_status"] = "failed"
+                    return result
+
+                out_val = validate_json_file(out_path, "outcome_extraction.schema.json")
+                if not out_val:
+                    result["errors"].extend(out_val.errors)
+                    logger.error(f"Outcome extraction schema validation issues: {out_val.errors}")
+                    _set_failed(document_code)
+                    result["final_status"] = "failed"
+                    return result
+
                 result["steps_completed"].append("outcome_extraction")
             except Exception as e:
                 result["errors"].append(f"Outcome extraction error: {e}")
                 logger.error(f"Outcome extraction error for {document_code}: {e}")
+                _set_failed(document_code)
+                result["final_status"] = "failed"
+                return result
         else:
             result["steps_completed"].append("outcome_extraction (cached)")
 
@@ -182,18 +207,25 @@ def process_article(document_code: str) -> dict:
             result["steps_completed"].append("audit (cached)")
 
         # Step 24-25: Mark for human review
+        missing_outputs = _get_missing_required_outputs(document_code)
+        if missing_outputs:
+            result["errors"].append(
+                f"Missing required outputs: {', '.join(missing_outputs)}"
+            )
+
         if not result["errors"] and result["final_status"] not in ("failed", "not_extractable"):
             with DatabaseManager() as session:
                 doc = get_document_by_code(session, document_code)
                 if doc and doc.status not in ("failed", "not_extractable"):
                     update_document_status(session, doc.id, "needs_human_review", "audit")
             result["final_status"] = "needs_human_review"
-        
+
         if result["errors"]:
             result["final_status"] = "failed"
-            console.print(f"\n[red]✗ {document_code} finished with errors.[/red]")
+            _set_failed(document_code)
+            console.print(f"\n[red]ERROR: {document_code} finished with errors.[/red]")
         else:
-            console.print(f"\n[green]✓ {document_code} completed.[/green]")
+            console.print(f"\n[green]OK: {document_code} completed.[/green]")
         
         console.print(f"  Status: {result['final_status']}")
         console.print(f"  Steps: {len(result['steps_completed'])}")
@@ -227,7 +259,9 @@ def _needs_step(document_code: str, target_status: str) -> bool:
         try:
             current_idx = status_order.index(current)
             target_idx = status_order.index(target_status)
-            return current_idx < target_idx
+            if current_idx < target_idx:
+                return True
+            return not _has_required_artifact(document_code, target_status)
         except ValueError:
             return True
 
@@ -238,3 +272,40 @@ def _set_failed(document_code: str):
         doc = get_document_by_code(session, document_code)
         if doc:
             update_document_status(session, doc.id, "failed")
+
+
+def _has_required_artifact(document_code: str, status: str) -> bool:
+    """Check if the expected artifact for a status exists."""
+    if status == "preprocessed":
+        return Path(f"data/01_processed/{document_code}/metadata.json").exists()
+
+    output_map = {
+        "classified": "classification.json",
+        "mapped": "mapping.json",
+        "scenarios_extracted": "scenario_extraction.json",
+        "outcomes_extracted": "outcome_extraction.json",
+        "audited": "audit.json",
+    }
+
+    output_file = output_map.get(status)
+    if not output_file:
+        return True
+
+    return (get_document_ai_output_dir(document_code) / output_file).exists()
+
+
+def _get_missing_required_outputs(document_code: str) -> list[str]:
+    """Get missing required AI output files for a fully processed document."""
+    required_outputs = [
+        "classification.json",
+        "mapping.json",
+        "scenario_extraction.json",
+        "outcome_extraction.json",
+        "audit.json",
+    ]
+    output_dir = get_document_ai_output_dir(document_code)
+    return [
+        output_name
+        for output_name in required_outputs
+        if not (output_dir / output_name).exists()
+    ]

@@ -56,6 +56,16 @@
               "ambiguous_baseline",
               "package_split_error",
               "unknown_field",
+              "orphan_outcome",
+              "missing_scenario_linkage",
+              "missing_room_or_space",
+              "missing_occupant_group",
+              "contradictory_digitization_status",
+              "duplicate_scenario",
+              "missing_factorial_dimension",
+              "extraction_omission",
+              "extraction_omissions",
+              "unclear",
               "other"
             ]
           },

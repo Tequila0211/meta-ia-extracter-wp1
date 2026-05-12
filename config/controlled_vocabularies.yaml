@@ -16,6 +16,7 @@ record_status:
   - pending
   - pre_extracted
   - extracted
+  - extracted_approximate
   - not_found
   - unclear
   - needs_digitization
@@ -46,6 +47,8 @@ intervention_type:
   - controls
   - envelope
   - package
+  - operational_change
+  - not_applicable
   - other
   - unclear
 
@@ -54,9 +57,42 @@ effect_direction:
   - reduction
   - neutral
   - unclear
+  - not_applicable
 
 review_decision:
   - accepted
   - corrected
   - rejected
   - unclear
+
+metric_group:
+  - energy_demand
+  - thermal_comfort
+  - health_risk
+  - thermal_resilience
+  - indoor_environment
+  - carbon_emissions
+  - cost
+  - other
+
+extraction_method:
+  - text
+  - table
+  - figure_visual_confident
+  - figure_visual_approximate
+  - calculated
+  - not_extracted
+
+confidence:
+  - high
+  - medium
+  - low
+
+operational_mode:
+  - normal_operation
+  - power_outage
+  - hvac_off
+  - natural_ventilation_only
+  - maximum_cooling
+  - free_running
+  - other

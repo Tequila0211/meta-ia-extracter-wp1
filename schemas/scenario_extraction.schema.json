@@ -19,11 +19,15 @@
         "required": [
           "scenario_temp_id",
           "scenario_label",
+          "scenario_family",
           "building_typology",
           "climate_location",
           "climate_zone",
           "weather_file",
           "simulation_software",
+          "year",
+          "ssp",
+          "operational_mode",
           "baseline_description",
           "intervention_description",
           "intervention_type",
@@ -38,13 +42,22 @@
         ],
         "properties": {
           "scenario_temp_id": {
-            "type": "string"
+            "type": "string",
+            "description": "Unique temporary ID for this scenario instance. Must be unique across all scenarios in the document. Format: S01, S02, etc."
           },
           "scenario_label": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Descriptive label for this specific scenario instance. Must uniquely identify this exact combination of parameters. Example: 'Baseline 2050 SSP2-4.5 Bedroom' rather than just 'Baseline'."
+          },
+          "scenario_family": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The high-level group this scenario belongs to. For intervention studies: 'baseline' or 'intervention'. For simulation studies: use the study's own grouping, e.g., 'baseline', 'ideal', 'power_failure', 'retrofit_package_A', etc."
           },
           "building_typology": {
             "type": [
@@ -76,23 +89,47 @@
               "null"
             ]
           },
+          "year": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The reference year or time period for this scenario. For current conditions use the actual year (e.g., '2020'). For future projections use the target year (e.g., '2050', '2080'). Null if not applicable."
+          },
+          "ssp": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Shared Socioeconomic Pathway or climate scenario identifier. Examples: 'SSP2-4.5', 'SSP5-8.5', 'RCP4.5', 'A2'. Use 'current' for present-day climate. Null if not applicable."
+          },
+          "operational_mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Operational status of the building systems in this scenario. Examples: 'normal_operation', 'power_outage', 'hvac_off', 'natural_ventilation_only', 'maximum_cooling', 'free_running'. Null if not applicable or not a simulation study."
+          },
           "baseline_description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Description of the reference/base case. For factorial simulation studies where there is no explicit baseline, describe the scenario conditions."
           },
           "intervention_description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Description of the intervention or strategy applied. Null if this scenario IS the baseline or if the study does not use a baseline/intervention comparison."
           },
           "intervention_type": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Type of intervention. Use 'not_applicable' for scenarios that are not interventions (e.g., baseline scenarios, factorial simulation conditions like power outages or climate projections)."
           },
           "is_package": {
             "type": [

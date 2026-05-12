@@ -156,8 +156,8 @@ def validate_outcome_against_codebook(
     if expected_level == "outcome":
         # Numeric fields need units
         if field_def.get("original_unit_required"):
-            unit = outcome_data.get("baseline_unit") or outcome_data.get("intervention_unit")
-            if not unit and (outcome_data.get("baseline_value") is not None or outcome_data.get("intervention_value") is not None):
+            unit = outcome_data.get("unit")
+            if not unit and outcome_data.get("value") is not None:
                 result.add_error(
                     f"Field '{outcome_name}' requires units for numeric values"
                 )

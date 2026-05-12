@@ -1,6 +1,6 @@
 codebook:
-  version: "v01"
-  description: "Codebook for AI-assisted extraction of building simulation studies for systematic review/meta-analysis."
+  version: "v02"
+  description: "Codebook for AI-assisted extraction of building simulation studies for systematic review/meta-analysis. Supports both classic intervention and factorial simulation designs."
 
 fields:
 
@@ -74,7 +74,17 @@ fields:
   - field_name: scenario_label
     entity_level: scenario
     label: "Scenario label"
-    definition: "Label or description of a specific simulation scenario, case, alternative, or model."
+    definition: "Label or description of a specific simulation scenario, case, alternative, or model. Must uniquely identify this exact parameter combination."
+    data_type: string
+    required: true
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: scenario_family
+    entity_level: scenario
+    label: "Scenario family"
+    definition: "High-level group this scenario belongs to. For intervention studies: 'baseline' or 'intervention'. For factorial studies: use the study's own grouping (e.g., 'baseline', 'ideal', 'power_failure', 'retrofit_A')."
     data_type: string
     required: true
     critical: true
@@ -131,10 +141,51 @@ fields:
     evidence_required: true
     human_validation_required: true
 
+  - field_name: year
+    entity_level: scenario
+    label: "Reference year"
+    definition: "Time period or target year for this scenario. Current conditions or future projection year."
+    data_type: string
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    extraction_instruction: "Use the actual year as reported (e.g., '2020', '2050', '2080'). Null only if the article does not specify a time dimension."
+
+  - field_name: ssp
+    entity_level: scenario
+    label: "Climate pathway"
+    definition: "Shared Socioeconomic Pathway, RCP, or climate projection scenario identifier."
+    data_type: string
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    extraction_instruction: "Use the identifier as reported (e.g., 'SSP2-4.5', 'SSP5-8.5', 'RCP4.5'). Use 'current' for present-day climate. Null only if not applicable."
+
+  - field_name: operational_mode
+    entity_level: scenario
+    label: "Operational mode"
+    definition: "Operational status of building systems in this scenario."
+    data_type: categorical
+    allowed_values:
+      - normal_operation
+      - power_outage
+      - hvac_off
+      - natural_ventilation_only
+      - maximum_cooling
+      - free_running
+      - other
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    extraction_instruction: "Describe the operational state of active systems. A power outage is NOT a passive design strategy — use 'power_outage' not 'passive_design'."
+
   - field_name: baseline_description
     entity_level: scenario
     label: "Baseline description"
-    definition: "Description of the reference, control, or base case scenario."
+    definition: "Description of the reference, control, or base case scenario. For factorial simulation studies, describe the scenario conditions."
     data_type: string
     required: true
     critical: true
@@ -144,9 +195,9 @@ fields:
   - field_name: intervention_description
     entity_level: intervention
     label: "Intervention description"
-    definition: "Description of the evaluated strategy, measure, or package."
+    definition: "Description of the evaluated strategy, measure, or package. Null if this scenario is not an intervention."
     data_type: string
-    required: true
+    required: false
     critical: true
     evidence_required: true
     human_validation_required: true
@@ -167,12 +218,15 @@ fields:
       - controls
       - envelope
       - package
+      - operational_change
+      - not_applicable
       - other
       - unclear
     required: true
     critical: true
     evidence_required: true
     human_validation_required: true
+    extraction_instruction: "Use 'not_applicable' for scenarios that are not interventions (e.g., baseline scenarios, climate projections, power outages). A power outage should use 'not_applicable' or 'operational_change', NOT 'passive_design'."
 
   - field_name: is_package
     entity_level: intervention
@@ -267,5 +321,77 @@ fields:
     standard_unit: "degC"
     required: false
     critical: false
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: MPMV
+    entity_level: outcome
+    label: "Modified Predicted Mean Vote"
+    definition: "Thermal comfort metric based on predicted mean vote, modified for specific conditions."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "dimensionless"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: HIHH
+    entity_level: outcome
+    label: "Heat Index Health Hours"
+    definition: "Cumulative hours where the heat index exceeds health thresholds."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "h"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: IOD
+    entity_level: outcome
+    label: "Indoor Overheating Degree"
+    definition: "Metric quantifying the degree and duration of indoor overheating."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "degC·h"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: HE
+    entity_level: outcome
+    label: "Heat Exposure"
+    definition: "Metric for cumulative heat exposure experienced by occupants."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "h"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: WBGT
+    entity_level: outcome
+    label: "Wet Bulb Globe Temperature"
+    definition: "Composite heat stress index combining temperature, humidity, wind, and radiation."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "degC"
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+
+  - field_name: HI
+    entity_level: outcome
+    label: "Heat Index"
+    definition: "Index combining air temperature and relative humidity to describe perceived temperature."
+    data_type: numeric
+    original_unit_required: true
+    standard_unit: "degF"
+    required: false
+    critical: true
     evidence_required: true
     human_validation_required: true

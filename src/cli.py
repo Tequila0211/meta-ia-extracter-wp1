@@ -82,22 +82,30 @@ def validate(
 
     output_dir = get_document_ai_output_dir(document)
     all_valid = True
+    required_tasks = set(TASK_SCHEMA_MAP.keys())
 
     for task_type, schema_name in TASK_SCHEMA_MAP.items():
         json_file = output_dir / schema_name.replace(".schema.json", ".json")
         if json_file.exists():
             result = validate_json_file(json_file, schema_name)
-            status = "[green]✓[/green]" if result else "[red]✗[/red]"
+            status = "[green]OK[/green]" if result else "[red]FAIL[/red]"
             console.print(f"  {status} {json_file.name}")
             if not result:
                 all_valid = False
                 for err in result.errors:
                     console.print(f"    {err}")
         else:
-            console.print(f"  [dim]— {json_file.name} (not found)[/dim]")
+            if task_type in required_tasks:
+                all_valid = False
+                console.print(f"  [red]FAIL[/red] {json_file.name} (not found)")
+            else:
+                console.print(f"  [dim]SKIP {json_file.name} (not found)[/dim]")
 
     if all_valid:
         console.print(f"\n[green]All validations passed for {document}.[/green]")
+    else:
+        console.print(f"\n[red]Validation failed for {document}.[/red]")
+        raise typer.Exit(1)
 
 
 @app.command(name="export-review")

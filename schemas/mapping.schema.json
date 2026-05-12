@@ -29,9 +29,13 @@
         "required": [
           "scenario_temp_id",
           "scenario_label",
+          "scenario_family",
           "building_typology",
           "climate_location",
           "climate_zone",
+          "year",
+          "ssp",
+          "operational_mode",
           "baseline_present",
           "intervention_present",
           "intervention_summary",
@@ -50,6 +54,13 @@
               "null"
             ]
           },
+          "scenario_family": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "High-level group: 'baseline', 'intervention', or study-specific grouping."
+          },
           "building_typology": {
             "type": [
               "string",
@@ -67,6 +78,27 @@
               "string",
               "null"
             ]
+          },
+          "year": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Reference year or time period for this scenario."
+          },
+          "ssp": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Climate pathway identifier (SSP/RCP). 'current' for present-day."
+          },
+          "operational_mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Building operational status: 'normal_operation', 'power_outage', etc."
           },
           "baseline_present": {
             "type": [

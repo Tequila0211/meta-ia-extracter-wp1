@@ -66,12 +66,12 @@ def run_outcome_extraction(document_code: str, session=None) -> dict:
         images_dir = Path(f"data/01_processed/{document_code}/pages_images")
         image_paths = sorted(images_dir.glob("page_*.png")) if images_dir.exists() else []
 
-        # Include scenario context from mapping
-        mapping_path = output_dir / "mapping.json"
+        # Include scenario context from final scenario extraction
+        scenario_path = output_dir / "scenario_extraction.json"
         scenario_context = ""
-        if mapping_path.exists():
-            mapping_data = json.loads(mapping_path.read_text(encoding="utf-8"))
-            scenario_context = f"\n\nPREVIOUS MAPPING RESULTS:\n{json.dumps(mapping_data, indent=2)}"
+        if scenario_path.exists():
+            scenario_data = json.loads(scenario_path.read_text(encoding="utf-8"))
+            scenario_context = f"\n\nFINAL EXTRACTED SCENARIOS:\n{json.dumps(scenario_data, indent=2)}"
 
         system_prompt = loader.get_system_prompt()
         task_prompt = loader.get_enriched_prompt("outcome_extraction", document_code)
@@ -121,6 +121,15 @@ def run_outcome_extraction(document_code: str, session=None) -> dict:
                 # Link to scenario if possible
                 scenario_temp_id = outcome_data.get("scenario_temp_id")
                 scenario_id = scenario_lookup.get(scenario_temp_id)
+                # Fallback if AI prepended document ID or formatted it differently
+                if not scenario_id and scenario_temp_id:
+                    clean_id = scenario_temp_id.split("_")[-1] # Gets 'S01' from 'A001_S01'
+                    scenario_id = scenario_lookup.get(clean_id)
+                    # Try removing zero padding if that fails ('S1' vs 'S01')
+                    if not scenario_id and clean_id.startswith('S') and clean_id[1:].isdigit():
+                        scenario_id = scenario_lookup.get(f"S{int(clean_id[1:])}")
+                        if not scenario_id:
+                            scenario_id = scenario_lookup.get(f"S{int(clean_id[1:]):02d}")
 
                 outcome = insert_outcome(
                     session, doc.id, scenario_id, outcome_code, outcome_data
@@ -136,7 +145,7 @@ def run_outcome_extraction(document_code: str, session=None) -> dict:
                     source_type=outcome_data.get("source_type"),
                     table_or_figure_label=outcome_data.get("table_or_figure"),
                     row_label=outcome_data.get("row_label"),
-                    column_label=outcome_data.get("column_label_baseline"),
+                    column_label=outcome_data.get("column_label"),
                     evidence_text=outcome_data.get("evidence_text"),
                 )
 

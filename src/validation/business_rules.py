@@ -113,13 +113,11 @@ def check_outcome_rules(outcome_data: dict[str, Any]) -> BusinessRulesValidation
 
     # Rule: missing_numeric_unit
     has_numeric = (
-        outcome_data.get("baseline_value") is not None
-        or outcome_data.get("intervention_value") is not None
+        outcome_data.get("value") is not None
         or outcome_data.get("reported_effect_value") is not None
     )
     has_unit = bool(
-        outcome_data.get("baseline_unit")
-        or outcome_data.get("intervention_unit")
+        outcome_data.get("unit")
         or outcome_data.get("reported_effect_unit")
     )
     if has_numeric and not has_unit:
@@ -134,8 +132,9 @@ def check_outcome_rules(outcome_data: dict[str, Any]) -> BusinessRulesValidation
 
     # Rule: figure_without_digitization
     source_type = outcome_data.get("source_type")
+    extraction_method = outcome_data.get("extraction_method")
     needs_digit = outcome_data.get("needs_digitization", False)
-    if source_type == "figure" and not needs_digit:
+    if source_type == "figure" and extraction_method == "not_extracted" and not needs_digit:
         result.add(BusinessRuleResult(
             rule_name="figure_without_digitization",
             passed=False,
@@ -144,6 +143,17 @@ def check_outcome_rules(outcome_data: dict[str, Any]) -> BusinessRulesValidation
         ))
     else:
         result.add(BusinessRuleResult(rule_name="figure_without_digitization", passed=True))
+
+    # Rule: orphan_outcome
+    if not outcome_data.get("scenario_temp_id"):
+        result.add(BusinessRuleResult(
+            rule_name="orphan_outcome",
+            passed=False,
+            action="block",
+            message="Outcome is missing a link to a scenario (scenario_temp_id)",
+        ))
+    else:
+        result.add(BusinessRuleResult(rule_name="orphan_outcome", passed=True))
 
     # Rule: unknown_codebook_field
     if outcome_name and outcome_name not in codebook_fields:

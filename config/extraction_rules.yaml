@@ -18,10 +18,7 @@ rules:
   figure_values_require_digitization:
     enabled: true
     action_if_violation: "set_needs_digitization"
-
-  baseline_intervention_pair_required:
-    enabled: true
-    action_if_missing: "unclear"
+    description: "Only applies when extraction_method is 'not_extracted' and source is a figure. If the AI read the value visually, it should NOT be flagged."
 
   do_not_split_packages_without_explicit_reporting:
     enabled: true
@@ -37,6 +34,21 @@ rules:
   human_validation_required_for_critical_fields:
     enabled: true
 
+  scenario_linkage_required:
+    enabled: true
+    action_if_missing: "block"
+    description: "Every outcome must have a valid scenario_temp_id linking it to a scenario record."
+
+  no_duplicate_scenarios:
+    enabled: true
+    action_if_violation: "block"
+    description: "Each scenario_temp_id must be unique within a document. No duplicate scenario records."
+
+  consistent_digitization_status:
+    enabled: true
+    action_if_violation: "flag"
+    description: "needs_digitization=true requires value=null and status=needs_digitization. needs_digitization=false requires a status other than needs_digitization."
+
 blocking_conditions:
   - name: "missing_page"
     condition: "status == extracted and page is null"
@@ -47,13 +59,21 @@ blocking_conditions:
     action: "block"
 
   - name: "missing_numeric_unit"
-    condition: "numeric_value_present == true and unit is null"
+    condition: "value is not null and unit is null"
     action: "block"
 
   - name: "figure_without_digitization"
-    condition: "source_type == figure and needs_digitization == false"
+    condition: "source_type == figure and extraction_method == not_extracted and needs_digitization == false"
     action: "set_needs_digitization"
 
   - name: "unknown_codebook_field"
     condition: "field_name not in codebook"
     action: "reject"
+
+  - name: "orphan_outcome"
+    condition: "scenario_temp_id is null or scenario_temp_id not in scenarios"
+    action: "block"
+
+  - name: "contradictory_digitization"
+    condition: "needs_digitization == true and value is not null"
+    action: "flag"
