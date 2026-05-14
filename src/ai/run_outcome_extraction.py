@@ -70,7 +70,8 @@ def run_outcome_extraction(document_code: str, session=None) -> dict:
         scenario_path = output_dir / "scenario_extraction.json"
         scenario_context = ""
         if scenario_path.exists():
-            scenario_data = json.loads(scenario_path.read_text(encoding="utf-8"))
+            from src.utils.json_utils import load_ai_json
+            scenario_data = load_ai_json(scenario_path)
             scenario_context = f"\n\nFINAL EXTRACTED SCENARIOS:\n{json.dumps(scenario_data, indent=2)}"
 
         system_prompt = loader.get_system_prompt()

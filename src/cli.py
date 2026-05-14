@@ -36,6 +36,34 @@ def init():
 
 
 @app.command()
+def clean(
+    force: bool = typer.Option(False, "--force", "-f", help="Force clean without confirmation"),
+):
+    """Clean/reset the database by removing the SQLite file and reinitializing."""
+    from src.database.db import get_database_url
+    url = get_database_url()
+    if url.startswith("sqlite:///"):
+        db_path = Path(url.replace("sqlite:///", ""))
+        if db_path.exists():
+            if not force:
+                confirm = typer.confirm(f"Are you sure you want to delete {db_path}?")
+                if not confirm:
+                    console.print("[yellow]Clean aborted.[/yellow]")
+                    return
+            try:
+                db_path.unlink()
+                console.print(f"[green]✓[/green] Deleted database file: {db_path}")
+            except Exception as e:
+                console.print(f"[red]Error deleting database: {e}[/red]")
+                return
+        else:
+            console.print(f"[dim]Database file {db_path} does not exist.[/dim]")
+
+    # Reinitialize
+    init()
+
+
+@app.command()
 def register():
     """Register PDFs from data/00_raw_pdfs/."""
     from src.ingestion.register_pdfs import register_pdfs

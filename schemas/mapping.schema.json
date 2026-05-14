@@ -33,6 +33,7 @@
           "building_typology",
           "climate_location",
           "climate_zone",
+          "climate_zone_source",
           "year",
           "ssp",
           "operational_mode",
@@ -77,7 +78,16 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Climate zone classification (e.g., Köppen-Geiger, ASHRAE). May be extracted from the document or looked up externally if the location is known."
+          },
+          "climate_zone_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["document", "external_lookup", null],
+            "description": "'document' if the climate zone was explicitly stated in the article, 'external_lookup' if it was determined from the location using external knowledge/internet search, null if climate_zone is null."
           },
           "year": {
             "type": [

@@ -99,8 +99,7 @@ def import_human_review(file_path: str | Path | None = None) -> dict:
 
             # Insert human review for relevant fields
             fields_to_review = [
-                ("baseline_value", row.get("human_baseline_value")),
-                ("intervention_value", row.get("human_intervention_value")),
+                ("value", row.get("human_value")),
                 ("unit", row.get("human_unit")),
             ]
 

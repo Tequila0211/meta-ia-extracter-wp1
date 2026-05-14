@@ -18,16 +18,16 @@ class TestBusinessRules:
     def test_numeric_without_unit_blocked(self):
         """Outcome with numeric value but no unit should be blocked."""
         data = {
+            "scenario_temp_id": "S01",
             "outcome_name": "cooling_demand",
-            "baseline_value": 120.5,
-            "baseline_unit": None,
-            "intervention_value": None,
-            "intervention_unit": None,
+            "value": 120.5,
+            "unit": None,
             "reported_effect_value": None,
             "reported_effect_unit": None,
             "page": 5,
             "evidence_text": "Some evidence",
             "source_type": "table",
+            "extraction_method": "table",
             "status": "extracted",
             "needs_digitization": False,
         }
@@ -39,16 +39,16 @@ class TestBusinessRules:
     def test_outcome_without_page_blocked(self):
         """Extracted outcome without page number should be blocked."""
         data = {
+            "scenario_temp_id": "S01",
             "outcome_name": "cooling_demand",
-            "baseline_value": 120.5,
-            "baseline_unit": "kWh/m2.year",
-            "intervention_value": None,
-            "intervention_unit": None,
+            "value": 120.5,
+            "unit": "kWh/m2.year",
             "reported_effect_value": None,
             "reported_effect_unit": None,
             "page": None,
             "evidence_text": "Some evidence",
             "source_type": "table",
+            "extraction_method": "table",
             "status": "extracted",
             "needs_digitization": False,
         }
@@ -60,17 +60,17 @@ class TestBusinessRules:
     def test_critical_without_evidence_blocked(self):
         """Critical outcome without evidence should be blocked."""
         data = {
+            "scenario_temp_id": "S01",
             "outcome_name": "cooling_demand",
-            "baseline_value": 120.5,
-            "baseline_unit": "kWh/m2.year",
-            "intervention_value": None,
-            "intervention_unit": None,
+            "value": 120.5,
+            "unit": "kWh/m2.year",
             "reported_effect_value": None,
             "reported_effect_unit": None,
             "page": 5,
             "evidence_text": None,
             "crop_path": None,
             "source_type": "table",
+            "extraction_method": "table",
             "status": "extracted",
             "needs_digitization": False,
         }
@@ -82,16 +82,16 @@ class TestBusinessRules:
     def test_figure_without_digitization_flagged(self):
         """Figure source not marked for digitization should be flagged."""
         data = {
+            "scenario_temp_id": "S01",
             "outcome_name": "cooling_demand",
-            "baseline_value": 120.5,
-            "baseline_unit": "kWh/m2.year",
-            "intervention_value": None,
-            "intervention_unit": None,
+            "value": 120.5,
+            "unit": "kWh/m2.year",
             "reported_effect_value": None,
             "reported_effect_unit": None,
             "page": 5,
             "evidence_text": "From figure",
             "source_type": "figure",
+            "extraction_method": "not_extracted",
             "status": "extracted",
             "needs_digitization": False,
         }
@@ -103,16 +103,16 @@ class TestBusinessRules:
     def test_valid_outcome_passes(self):
         """A fully valid outcome should pass all rules."""
         data = {
+            "scenario_temp_id": "S01",
             "outcome_name": "cooling_demand",
-            "baseline_value": 120.5,
-            "baseline_unit": "kWh/m2.year",
-            "intervention_value": 85.0,
-            "intervention_unit": "kWh/m2.year",
+            "value": 120.5,
+            "unit": "kWh/m2.year",
             "reported_effect_value": None,
             "reported_effect_unit": None,
             "page": 12,
             "evidence_text": "Table 3 shows cooling demand.",
             "source_type": "table",
+            "extraction_method": "table",
             "status": "extracted",
             "needs_digitization": False,
         }

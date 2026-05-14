@@ -59,10 +59,11 @@ def run_audit(document_code: str, session=None) -> dict:
 
         # Include all prior extraction results as context
         prior_results = {}
+        from src.utils.json_utils import load_ai_json
         for fname in ["classification.json", "mapping.json", "scenario_extraction.json", "outcome_extraction.json"]:
             fpath = output_dir / fname
             if fpath.exists():
-                prior_results[fname] = json.loads(fpath.read_text(encoding="utf-8"))
+                prior_results[fname] = load_ai_json(fpath)
 
         prior_context = f"\n\nPREVIOUS EXTRACTION RESULTS:\n{json.dumps(prior_results, indent=2)}"
 

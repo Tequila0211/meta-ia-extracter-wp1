@@ -191,11 +191,26 @@ class GeminiClient:
             Dict with 'success', 'data', 'model', 'error', 'raw_text' keys.
         """
         # Build generation config
-        gen_config = types.GenerateContentConfig(
+        gen_config_kwargs = dict(
             system_instruction=system_prompt,
             temperature=0.1,
             response_mime_type="application/json",
         )
+
+        # Enable Google Search grounding for tasks that may need
+        # to look up climate zone classifications from location data.
+        # This is the ONLY external data the system is allowed to retrieve.
+        # NOTE: Google Search tool is incompatible with response_mime_type,
+        # so we remove the mime type constraint and rely on the schema
+        # instruction injected into the prompt to get JSON output.
+        if task_type in ("mapping", "scenario_extraction"):
+            grounding_tool = types.Tool(
+                google_search=types.GoogleSearch()
+            )
+            gen_config_kwargs["tools"] = [grounding_tool]
+            del gen_config_kwargs["response_mime_type"]
+
+        gen_config = types.GenerateContentConfig(**gen_config_kwargs)
 
         # Inject JSON schema into the prompt instead of using response_schema
         # because the SDK's strict Pydantic validation rejects Draft-07 schemas.
@@ -234,8 +249,10 @@ class GeminiClient:
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 output_path.write_text(raw_text, encoding="utf-8")
 
-                # Parse JSON
-                data = json.loads(raw_text)
+                # Strip markdown code fences if present and parse JSON
+                # (happens when response_mime_type is not set, e.g. with search grounding)
+                from src.utils.json_utils import parse_json_safe
+                data = parse_json_safe(raw_text)
 
                 logger.info(
                     f"[{document_id}] API call SUCCESS: task={task_type}, "

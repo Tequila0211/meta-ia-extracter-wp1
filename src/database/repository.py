@@ -212,6 +212,7 @@ def insert_scenario(
         building_typology=data.get("building_typology"),
         climate_location=data.get("climate_location"),
         climate_zone=data.get("climate_zone"),
+        climate_zone_source=data.get("climate_zone_source"),
         weather_file=data.get("weather_file"),
         simulation_software=data.get("simulation_software"),
         baseline_description=data.get("baseline_description"),

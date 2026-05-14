@@ -124,12 +124,27 @@ fields:
   - field_name: climate_zone
     entity_level: scenario
     label: "Climate zone"
-    definition: "Climate classification if explicitly reported."
+    definition: "Climate classification if explicitly reported. If the document reports the location but NOT the climate zone, the AI must look it up externally (this is the ONLY external data allowed)."
     data_type: string
     required: false
     critical: false
     evidence_required: true
     human_validation_required: true
+    extraction_instruction: "Extract from the document if explicitly stated. If NOT stated but the climate_location is known, look up the correct Köppen-Geiger or ASHRAE climate zone classification using external knowledge and set climate_zone_source = 'external_lookup'."
+
+  - field_name: climate_zone_source
+    entity_level: scenario
+    label: "Climate zone source"
+    definition: "Indicates whether the climate zone was extracted from the document or determined via external lookup."
+    data_type: categorical
+    allowed_values:
+      - document
+      - external_lookup
+    required: false
+    critical: false
+    evidence_required: false
+    human_validation_required: true
+    extraction_instruction: "Set to 'document' if the article explicitly states the climate zone. Set to 'external_lookup' if the AI determined it from the location using external knowledge or internet search."
 
   - field_name: weather_file
     entity_level: scenario

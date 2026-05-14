@@ -116,6 +116,7 @@ class Scenario(Base):
     building_typology = Column(Text)
     climate_location = Column(Text)
     climate_zone = Column(Text)
+    climate_zone_source = Column(Text)  # 'document' or 'external_lookup'
     weather_file = Column(Text)
     simulation_software = Column(Text)
     baseline_description = Column(Text)

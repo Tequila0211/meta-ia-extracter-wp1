@@ -12,6 +12,7 @@ from rich.console import Console
 
 from src.database.db import DatabaseManager
 from src.database.models import (
+    ArticleClassification,
     DigitizationTask,
     Document,
     Evidence,
@@ -56,6 +57,21 @@ def export_review_excel(output_path: str | Path | None = None) -> Path:
             "updated_at": d.updated_at,
         } for d in docs]
 
+        # 01B_CLASSIFICATIONS
+        classifications = session.query(ArticleClassification).all()
+        classifications_data = []
+        for c in classifications:
+            doc = session.query(Document).filter(Document.id == c.document_id).first()
+            classifications_data.append({
+                "document_code": doc.document_code if doc else "",
+                "study_type": c.study_type,
+                "is_extractable": bool(c.is_extractable) if c.is_extractable is not None else None,
+                "has_simulation": bool(c.has_simulation) if c.has_simulation is not None else None,
+                "has_numeric_outcomes": bool(c.has_numeric_outcomes) if c.has_numeric_outcomes is not None else None,
+                "reason": c.reason,
+                "status": c.status,
+            })
+
         # 02_SCENARIOS
         scenarios = session.query(Scenario).all()
         scenarios_data = []
@@ -72,6 +88,7 @@ def export_review_excel(output_path: str | Path | None = None) -> Path:
                 "building_typology": s.building_typology,
                 "climate_location": s.climate_location,
                 "climate_zone": s.climate_zone,
+                "climate_zone_source": s.climate_zone_source,
                 "simulation_software": s.simulation_software,
                 "baseline_description": s.baseline_description,
                 "intervention_description": s.intervention_description,
@@ -187,6 +204,7 @@ def export_review_excel(output_path: str | Path | None = None) -> Path:
         readme_df.to_excel(writer, sheet_name="00_README", index=False)
 
         pd.DataFrame(docs_data).to_excel(writer, sheet_name="01_DOCUMENTS", index=False)
+        pd.DataFrame(classifications_data).to_excel(writer, sheet_name="01B_CLASSIFICATIONS", index=False)
         pd.DataFrame(scenarios_data).to_excel(writer, sheet_name="02_SCENARIOS", index=False)
         pd.DataFrame(outcomes_data).to_excel(writer, sheet_name="03_OUTCOMES", index=False)
         pd.DataFrame(evidence_data).to_excel(writer, sheet_name="04_EVIDENCE", index=False)
