@@ -65,6 +65,17 @@
               "missing_factorial_dimension",
               "extraction_omission",
               "extraction_omissions",
+              "generic_passive_design",
+              "misting_classified_as_ventilation",
+              "package_missing_components",
+              "ssp_current_misuse",
+              "figure_visual_not_meta_eligible",
+              "active_system_contamination",
+              "profile_as_scalar",
+              "missing_space_id",
+              "missing_baseline_linkage",
+              "missing_building_case",
+              "component_missing_evidence",
               "unclear",
               "other"
             ]

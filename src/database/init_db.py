@@ -11,14 +11,15 @@ console = Console()
 
 
 def init_database(database_url: str | None = None) -> None:
-    """Create all database tables.
+    """Create all database tables, dropping existing ones first.
 
     Args:
         database_url: Optional database URL override.
     """
     engine = get_engine(database_url)
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    console.print("[green]✓[/green] Database initialized successfully.")
+    console.print("[green]✓[/green] Database initialized successfully (all tables dropped and recreated).")
     console.print(f"  Tables created: {', '.join(Base.metadata.tables.keys())}")
 
 

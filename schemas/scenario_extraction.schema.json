@@ -28,6 +28,7 @@
           "simulation_software",
           "year",
           "ssp",
+          "climate_period_type",
           "operational_mode",
           "baseline_description",
           "intervention_description",
@@ -65,6 +66,13 @@
               "string",
               "null"
             ]
+          },
+          "building_case_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Temporary ID linking to a building_case record from building_case_extraction. Null if not yet extracted or single-building study."
           },
           "climate_location": {
             "type": [
@@ -111,7 +119,22 @@
               "string",
               "null"
             ],
-            "description": "Shared Socioeconomic Pathway or climate scenario identifier. Examples: 'SSP2-4.5', 'SSP5-8.5', 'RCP4.5', 'A2'. Use 'current' for present-day climate. Null if not applicable."
+            "description": "Shared Socioeconomic Pathway or climate scenario identifier. Examples: 'SSP2-4.5', 'SSP5-8.5', 'RCP4.5', 'A2'. MUST be null if the document does not explicitly report a pathway. NEVER use 'current'."
+          },
+          "climate_period_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["current", "future_projection", "historical", "heatwave", "unclear", null],
+            "description": "Type of climate period. Use 'current' for present-day climate (replaces former ssp='current'). Use 'future_projection' when an SSP/RCP is used. Use 'heatwave' for heatwave-specific analysis."
+          },
+          "weather_year_or_period": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Specific year or range: '2020', '2050', '2001-2020', etc. Null if not reported."
           },
           "operational_mode": {
             "type": [
@@ -127,6 +150,44 @@
             ],
             "description": "Description of the reference/base case. For factorial simulation studies where there is no explicit baseline, describe the scenario conditions."
           },
+          "baseline_scenario_temp_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The scenario_temp_id of the baseline/reference scenario this intervention is compared against. Null if this IS a baseline or comparison is unclear."
+          },
+          "is_reference_baseline": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True if this scenario serves as the reference baseline for other scenarios."
+          },
+          "comparison_logic": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "same_building_no_intervention",
+              "same_year_same_climate",
+              "pre_post",
+              "factorial_reference",
+              "not_applicable",
+              "unclear",
+              null
+            ],
+            "description": "Logic of baseline-intervention comparison."
+          },
+          "baseline_compatibility_status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["valid", "partially_valid", "invalid", "unclear", null],
+            "description": "Assessment of whether baseline comparison is methodologically valid."
+          },
           "intervention_description": {
             "type": [
               "string",
@@ -139,7 +200,7 @@
               "string",
               "null"
             ],
-            "description": "Type of intervention. Use 'not_applicable' for scenarios that are not interventions (e.g., baseline scenarios, factorial simulation conditions like power outages or climate projections)."
+            "description": "Type of intervention from expanded taxonomy. NEVER use 'passive_design'. Use specific types: solar_shading, natural_ventilation, evaporative_cooling, etc. Use 'not_applicable' for non-intervention scenarios."
           },
           "is_package": {
             "type": [
@@ -153,11 +214,54 @@
               "type": "string"
             }
           },
+          "intervention_package_simple": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human-readable summary of the intervention package. E.g., 'shading + misting', 'ventilation + thermal mass'. Null for non-packages."
+          },
+          "passive_component_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Number of passive components in the intervention. Allows comparing simple vs package strategies."
+          },
+          "has_solar_shading": { "type": ["boolean", "null"] },
+          "has_external_shading": { "type": ["boolean", "null"] },
+          "has_internal_shading": { "type": ["boolean", "null"] },
+          "has_natural_ventilation": { "type": ["boolean", "null"] },
+          "has_cross_ventilation": { "type": ["boolean", "null"] },
+          "has_night_ventilation": { "type": ["boolean", "null"] },
+          "has_stack_ventilation": { "type": ["boolean", "null"] },
+          "has_high_thermal_mass": { "type": ["boolean", "null"] },
+          "has_pcm": { "type": ["boolean", "null"] },
+          "has_cool_roof": { "type": ["boolean", "null"] },
+          "has_cool_wall_or_reflective_coating": { "type": ["boolean", "null"] },
+          "has_green_roof": { "type": ["boolean", "null"] },
+          "has_green_wall": { "type": ["boolean", "null"] },
+          "has_insulation_change": { "type": ["boolean", "null"] },
+          "has_glazing_change": { "type": ["boolean", "null"] },
+          "has_evaporative_cooling": { "type": ["boolean", "null"] },
+          "has_misting": { "type": ["boolean", "null"] },
+          "has_solar_chimney": { "type": ["boolean", "null"] },
+          "has_courtyard_strategy": { "type": ["boolean", "null"] },
+          "has_earth_air_heat_exchanger": { "type": ["boolean", "null"] },
+          "has_active_system": { "type": ["boolean", "null"] },
+          "active_system_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Type of active system if has_active_system is true."
+          },
           "reported_outcomes": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "ONLY outcomes explicitly reported with a recoverable form: value, table, figure, temporal profile, or quantitative text. Do NOT include inferred outcomes."
           },
           "page": {
             "type": [

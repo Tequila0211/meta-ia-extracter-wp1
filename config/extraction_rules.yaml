@@ -49,6 +49,58 @@ rules:
     action_if_violation: "flag"
     description: "needs_digitization=true requires value=null and status=needs_digitization. needs_digitization=false requires a status other than needs_digitization."
 
+  # ── NEW RULES (v02 — Robustecimiento) ─────────────────────────────────
+
+  generic_passive_design_forbidden:
+    enabled: true
+    action_if_violation: "human_review_required"
+    description: "If intervention_type = 'passive_design', mark human_review_required = true. passive_design is too generic and must be replaced by a specific component type."
+
+  misting_not_ventilation:
+    enabled: true
+    action_if_violation: "human_review_required"
+    description: "If description contains misting/fogging/spray AND intervention_type is 'ventilation', flag as error. Must be classified as 'misting' or 'evaporative_cooling'. Include justification if the article explicitly defines it as ventilation."
+
+  package_requires_components:
+    enabled: true
+    action_if_violation: "flag"
+    description: "If is_package=true, there must be at least two intervention components identified. Otherwise flag for review."
+
+  components_require_evidence:
+    enabled: true
+    action_if_violation: "flag"
+    description: "Every intervention component must have evidence_page and evidence_text. Components without evidence are flagged."
+
+  intervention_requires_baseline_for_effect:
+    enabled: true
+    action_if_violation: "flag"
+    description: "If calculated_effect_value is not null, there must be a valid baseline scenario (baseline_scenario_temp_id or comparison_baseline_scenario_id). Otherwise flag."
+
+  visual_figure_not_primary_meta:
+    enabled: true
+    action_if_violation: "flag"
+    description: "Figure visual values (figure_visual_approximate, figure_visual_confident without numeric labels) should not be marked as usable_for_quantitative_synthesis=true. They may be eligible for sensitivity analysis only."
+
+  ssp_current_forbidden_unless_reported:
+    enabled: true
+    action_if_violation: "flag"
+    description: "ssp must NEVER be 'current'. Use climate_period_type='current' and ssp=null instead. Flag any occurrence of ssp='current'."
+
+  space_specific_outcomes_require_space_id:
+    enabled: true
+    action_if_violation: "flag"
+    description: "If room_or_space is set to a specific room/zone, a corresponding space_id should be linked when space extraction has been performed."
+
+  active_system_contamination_flag:
+    enabled: true
+    action_if_violation: "flag"
+    description: "If a scenario includes HVAC, fan, misting, or other active system components but intervention_type is not 'active_system_change' or 'mixed_passive_active_package', flag for human review."
+
+  profile_outcome_not_single_value:
+    enabled: true
+    action_if_violation: "flag"
+    description: "Temporal curves or profiles without an aggregated single value should not be extracted as scalar outcomes. They should be noted as profile_only in reported_outcomes."
+
 blocking_conditions:
   - name: "missing_page"
     condition: "status == extracted and page is null"
@@ -76,4 +128,12 @@ blocking_conditions:
 
   - name: "contradictory_digitization"
     condition: "needs_digitization == true and value is not null"
+    action: "flag"
+
+  - name: "passive_design_used"
+    condition: "intervention_type == passive_design"
+    action: "human_review_required"
+
+  - name: "ssp_current_used"
+    condition: "ssp == current"
     action: "flag"

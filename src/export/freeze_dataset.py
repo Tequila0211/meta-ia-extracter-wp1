@@ -106,7 +106,7 @@ def freeze_dataset(version: str) -> dict:
 - Validated outcomes: {len(validated_outcomes)}
 
 ## Notes
-Initial frozen dataset.
+Initial frozen dataset incorporating advanced systematic review metadata.
 """
     changelog_path.write_text(changelog_content, encoding="utf-8")
 
@@ -131,9 +131,14 @@ Initial frozen dataset.
         "schemas": [
             "classification.schema.json",
             "mapping.schema.json",
+            "building_case_extraction.schema.json",
             "scenario_extraction.schema.json",
+            "space_extraction.schema.json",
+            "intervention_component_extraction.schema.json",
             "outcome_extraction.schema.json",
+            "baseline_matching.schema.json",
             "audit.schema.json",
+            "meta_readiness.schema.json",
         ],
         "number_of_documents": len(docs),
         "number_of_validated_outcomes": len(validated_outcomes),

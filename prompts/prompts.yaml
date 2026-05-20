@@ -1,4 +1,4 @@
-prompts_version: "v03"
+prompts_version: "v04"
 
 global_system_prompt: |
   You are an AI assistant supporting data extraction for a systematic review and meta-analysis of building performance studies.
@@ -24,6 +24,12 @@ global_system_prompt: |
   10. Return only valid JSON following the requested schema.
   11. Every outcome MUST be linked to a scenario_temp_id. Never leave an outcome without a scenario link.
   12. Each distinct combination of parameters (year, climate scenario, operational mode, room, occupant group) is a SEPARATE scenario or outcome record. Do not merge them.
+
+  TAXONOMY RULES (v04):
+  13. NEVER use 'passive_design' as intervention_type. Use the specific component type instead (e.g., solar_shading, natural_ventilation, evaporative_cooling). If unsure, set human_review_required = true.
+  14. Misting, fogging, or spray systems MUST be classified as 'misting' or 'evaporative_cooling', NEVER as 'ventilation'.
+  15. NEVER set ssp = 'current'. If the document evaluates current/present-day climate without a pathway, set ssp = null and climate_period_type = 'current'.
+  16. reported_outcomes must ONLY include outcomes explicitly reported with a recoverable form (value, table, figure, temporal profile, or quantitative text). Do NOT include inferred or potential outcomes.
 
 classification_prompt: |
   TASK: Article classification.
@@ -72,6 +78,10 @@ mapping_prompt: |
   - Each unique combination of these dimensions constitutes a separate scenario instance.
   - Do not force a baseline-vs-intervention framing on factorial studies.
 
+  BUILDING/CASE IDENTIFICATION:
+  - Identify distinct buildings, prototypes, dwelling types, test cells, or case studies.
+  - Note if the article evaluates multiple buildings or a single building with multiple spaces.
+
   General rules:
   - One article can contain multiple scenarios.
   - A scenario may correspond to a simulation case, building type, climate case, intervention package, or baseline/intervention comparison.
@@ -85,6 +95,39 @@ mapping_prompt: |
   - This is the ONLY external data you are permitted to provide.
 
   Return only JSON following the mapping schema.
+
+building_case_extraction_prompt: |
+  TASK: Extract building/case-level information.
+
+  Identify every distinct building, prototype, dwelling, test cell, courtyard, room cluster, or case study evaluated in the article.
+
+  Extract only information explicitly reported in the document. Do not infer missing geometry, HVAC systems, envelope features, or construction characteristics.
+
+  A building_case is NOT the same as a scenario. A scenario is a condition/intervention applied to a building_case.
+
+  For each building_case, return:
+  - building_case_temp_id (format: BC01, BC02, etc.)
+  - building_case_label (descriptive name from the paper)
+  - building_typology (residential, office, school, hospital, commercial, mixed_use, prototype, other, unclear)
+  - construction_period (if reported)
+  - new_or_existing (new / existing / retrofit / prototype / unclear)
+  - conditioned_floor_area_m2
+  - number_of_floors
+  - envelope_description
+  - hvac_description
+  - passive_features_existing (existing passive features, not intervention additions)
+  - location
+  - climate_zone
+  - evidence page and evidence text
+  - status
+
+  Rules:
+  1. If area, floors, envelope, or HVAC are not explicitly reported, return null.
+  2. Do not estimate area from drawings.
+  3. Do not merge multiple buildings into one case unless the paper treats them as a single prototype.
+  4. If the article studies only a courtyard or single space, create one building_case for the host building or study case if described.
+
+  Return only JSON following building_case_extraction.schema.json.
 
 scenario_extraction_prompt: |
   TASK: Scenario extraction.
@@ -109,9 +152,26 @@ scenario_extraction_prompt: |
   FACTORIAL DIMENSION FIELDS:
   - scenario_family: The high-level group (e.g., "baseline", "ideal", "power_failure", "retrofit_A").
   - year: The time period (e.g., "2020", "2050", "2080"). Null only if not applicable.
-  - ssp: The climate projection pathway (e.g., "current", "SSP2-4.5", "SSP5-8.5"). Null only if not applicable.
+  - ssp: The climate projection pathway (e.g., "SSP2-4.5", "SSP5-8.5"). MUST be null if the document does not report a pathway. NEVER use "current".
+  - climate_period_type: Use "current" for present-day climate, "future_projection" for pathways, "heatwave" for heatwave analyses. This replaces the former misuse of ssp="current".
+  - weather_year_or_period: The specific year or range used for weather data.
   - operational_mode: The building system status (e.g., "normal_operation", "power_outage", "maximum_cooling"). Null only if not applicable.
-  - intervention_type: Use "not_applicable" when the scenario does not represent an intervention (e.g., a power outage is an operational disruption, not a passive design strategy).
+  - intervention_type: NEVER use "passive_design". Use the specific component type. If the intervention is generic passive, set human_review_required = true.
+
+  BASELINE LINKING:
+  - For each non-baseline scenario, identify the baseline it compares against and set baseline_scenario_temp_id.
+  - Set is_reference_baseline = true for scenarios that serve as the reference.
+  - Set comparison_logic to describe the comparison type.
+
+  INTERVENTION PACKAGE CODING:
+  - Set intervention_package_simple to a human-readable summary (e.g., "shading + misting").
+  - Set passive_component_count to the number of passive components.
+  - Set all applicable has_* binary flags (has_solar_shading, has_natural_ventilation, etc.).
+  - If an intervention includes an active system, set has_active_system = true and describe active_system_type.
+
+  MISTING/VENTILATION RULE:
+  - Misting, fogging, or spray cooling MUST be classified as 'misting' or 'evaporative_cooling', NEVER as 'ventilation'.
+  - If the article describes such a system and the AI is uncertain, justify the classification in evidence_text and set human_review_required = true.
 
   For classic intervention studies:
   - scenario_family = "baseline" or "intervention"
@@ -124,6 +184,7 @@ scenario_extraction_prompt: |
   - Do not invent scenario labels.
   - If a scenario is unclear, mark status = "unclear".
   - Include evidence for each scenario.
+  - reported_outcomes MUST only include outcomes explicitly reported with a recoverable form. Do NOT list potential or inferred outcomes.
 
   CLIMATE ZONE LOOKUP RULE:
   - If the document reports a climate_location but does NOT explicitly report a climate_zone, you MUST look up the correct climate zone (e.g., Köppen-Geiger or ASHRAE classification) for that location using your knowledge or internet search.
@@ -132,6 +193,104 @@ scenario_extraction_prompt: |
   - This is the ONLY external data you are permitted to provide.
 
   Return only JSON following the scenario extraction schema.
+
+space_extraction_prompt: |
+  TASK: Extract evaluated spaces/zones.
+
+  Identify every room, zone, courtyard, test cell, apartment, house, or whole-building space for which outcomes are reported.
+
+  Extract geometry and spatial descriptors when explicitly reported:
+  - area (m²)
+  - height (m)
+  - volume (m³)
+  - orientation
+  - window-to-wall ratio
+  - opening area (m²)
+  - occupancy density
+  - floor level
+
+  For each space, return:
+  - space_temp_id (format: SP01, SP02, etc.)
+  - building_case_temp_id (link to building case if available)
+  - scenario_temp_id (link to scenario if space is scenario-specific; null if shared across scenarios)
+  - space_name_original (name as used in the paper)
+  - space_type_standardized (bedroom, living_room, greatroom, classroom, office, courtyard, whole_building, test_cell, corridor, kitchen, bathroom, other, unclear)
+
+  Critical rules:
+  1. Do not infer dimensions from figures unless numerical dimensions are explicitly labeled.
+  2. Do not assign one room's geometry to another room.
+  3. If outcomes are reported separately for bedroom and greatroom, create separate space records.
+  4. If the paper reports only whole-building outcomes, use space_type_standardized = "whole_building".
+  5. If geometry is absent, return null, not an estimate.
+
+  Return only JSON following space_extraction.schema.json.
+
+intervention_component_coding_prompt: |
+  TASK: Code passive and active intervention components for each scenario.
+
+  For every scenario extracted, identify whether the intervention contains any of the following components:
+  - solar shading (external or internal)
+  - natural ventilation (cross, stack, or general)
+  - night ventilation
+  - high thermal mass
+  - phase change material (PCM)
+  - cool roof
+  - cool wall or reflective coating
+  - insulation change
+  - glazing change
+  - green roof
+  - green wall
+  - courtyard strategy
+  - evaporative cooling
+  - misting
+  - solar chimney
+  - earth-air heat exchanger
+  - HVAC or other active system
+  - controls or operational change
+
+  For each component:
+  - mark present only if explicitly supported by the document;
+  - provide evidence page and evidence text;
+  - specify component_family and component_type;
+  - specify whether it is passive (is_passive=true) or requires active support (is_active_support=true);
+  - specify operation_schedule if reported (daytime/nighttime/24h/seasonal);
+  - if a quantitative parameter is given (e.g., U-value, albedo, thickness), record it in parameter_value and parameter_unit.
+
+  Critical rules:
+  1. Do not code generic "passive design" unless the specific component is identified.
+  2. Do not classify misting as ventilation; classify it as evaporative_cooling/misting.
+  3. Do not split packages into separate intervention effects unless the paper reports separate outcomes.
+  4. If a component is part of the existing baseline building (not an intervention addition), mark is_existing_feature = true.
+  5. Every component MUST have evidence (evidence_page and evidence_text).
+
+  Return JSON with one record per scenario-component pair, following intervention_component_extraction.schema.json.
+
+baseline_matching_prompt: |
+  TASK: Match each intervention scenario to the correct baseline/reference scenario.
+
+  For every non-baseline scenario, identify the most appropriate baseline scenario from the extracted scenario list.
+
+  Matching rules:
+  1. Prefer same building/case (matching building_case_id).
+  2. Prefer same climate location.
+  3. Prefer same weather year or climate pathway.
+  4. Prefer same operational mode unless the intervention is explicitly an operational mode change.
+  5. Do not match across different spaces unless the outcome is whole-building.
+  6. If no valid baseline exists, set baseline_scenario_temp_id = null and status = "no_valid_baseline".
+
+  Return for each match:
+  - intervention_scenario_temp_id
+  - baseline_scenario_temp_id
+  - comparison_logic (same_building_no_intervention / same_year_same_climate / pre_post / factorial_reference / not_applicable / unclear)
+  - match_confidence (high / medium / low)
+  - evidence_page
+  - evidence_text
+  - reason (explanation of why this baseline was selected)
+  - status (matched / no_valid_baseline / unclear)
+
+  Do not calculate effects in this step.
+
+  Return only JSON following baseline_matching.schema.json.
 
 outcome_extraction_prompt: |
   TASK: Outcome extraction in LONG FORMAT.
@@ -152,20 +311,43 @@ outcome_extraction_prompt: |
 
   SPATIAL AND OCCUPANT SPECIFICITY:
   - If the article reports values for different rooms/zones (e.g., bedroom, greatroom), create SEPARATE outcome records for each room with room_or_space filled in.
+  - If a space_id from space extraction is available, include it.
   - If the article reports values for different occupant groups (e.g., elderly, non-elderly), create SEPARATE outcome records for each group with occupant_group filled in.
 
   EXTRACTION METHOD AND DIGITIZATION:
   - If a value is clearly stated in text: extraction_method = "text", confidence = "high", needs_digitization = false.
   - If a value is in a table: extraction_method = "table", confidence = "high", needs_digitization = false.
-  - If you can read a value from a figure with confidence: extraction_method = "figure_visual_confident", confidence = "medium", needs_digitization = false, status = "extracted".
+  - If a value was extracted via digitization tool: extraction_method = "figure_digitized", confidence = "high", needs_digitization = false.
+  - If you can read a value from a figure with confidence AND the figure has explicit numeric labels: extraction_method = "figure_visual_confident", confidence = "medium", needs_digitization = false, status = "extracted".
   - If you can approximately read a value from a figure: extraction_method = "figure_visual_approximate", confidence = "low", needs_digitization = false, status = "extracted_approximate".
   - If a value is in a figure but cannot be read at all: extraction_method = "not_extracted", value = null, needs_digitization = true, status = "needs_digitization".
+
+  FIGURE VALUE RIGOR:
+  - figure_visual_confident is ONLY acceptable if the figure has explicit numeric labels/annotations.
+  - A value read visually from an unlabeled figure should be figure_visual_approximate.
+  - Set digitization_required_for_meta = true for any figure-derived value without digitization.
+  - Set usable_for_quantitative_synthesis = false for figure_visual_approximate values.
+
+  EFFECT SIZE FIELDS:
+  - If the article reports both baseline and intervention values for paired comparison, fill baseline_value and intervention_value.
+  - If you can compute a simple difference, fill calculated_effect_value, calculated_effect_type, set is_ai_calculated = true, and describe in ai_calculation_basis.
+  - Set effect_direction_standardized (beneficial/harmful/neutral/unclear) based on higher_is_better for the metric.
+  - Extract variance if reported: sd, se, ci_lower, ci_upper, n.
+
+  TIME AND AGGREGATION:
+  - Set time_period to one of exactly: ["annual", "summer", "winter", "heatwave", "daytime", "nighttime", "other"]. You MUST map specific months (e.g., "August", "July" in warm climates) to one of these standardized options (e.g., map "August" to "summer"). Never return arbitrary month names.
+  - Set aggregation_method to one of exactly: ["mean", "max", "min", "median", "cumulative", "hours_above_threshold", "other"].
+  - Set threshold_definition if the metric uses a threshold (e.g., "adaptive comfort limit", "HI > 105°F").
+
+  OUTCOME ELIGIBILITY:
+  - Only include outcomes explicitly reported with a recoverable numeric value, table, figure, or quantitative text.
+  - If an outcome appears only as a temporal curve without a single aggregated value, do NOT extract it as a scalar. Instead, note it in the scenario's reported_outcomes as a profile.
 
   METRIC GROUP:
   - Classify each outcome into a metric_group: energy_demand, thermal_comfort, health_risk, thermal_resilience, indoor_environment, carbon_emissions, cost, other.
 
   General rules:
-  - Do not calculate values not explicitly reported unless the prompt explicitly asks for a simple paired difference and both values are present.
+  - Do not calculate values not explicitly reported unless baseline and intervention values are clearly paired.
   - Do not convert units unless the original unit is explicit.
   - If no value is found, return null and status = "not_found".
 
@@ -190,7 +372,55 @@ audit_prompt: |
   - outcomes missing room/space or occupant_group when the article differentiates by these dimensions
   - inconsistent needs_digitization vs extraction_method/status combinations
 
+  NEW CHECKS (v04):
+  - generic_passive_design: Flag if intervention_type = "passive_design" (this is now forbidden)
+  - misting_classified_as_ventilation: Flag if description contains misting/fogging/spray AND intervention_type is "ventilation" — explain why the article may define it this way and flag for human review
+  - package_missing_components: Flag if is_package=true but fewer than 2 components identified
+  - ssp_current_misuse: Flag if ssp = "current" (should use climate_period_type instead)
+  - figure_visual_not_meta_eligible: Flag figure_visual_approximate values marked as usable for primary meta-analysis
+  - active_system_contamination: Flag if HVAC/fan/misting active system is present but scenario is not marked as mixed/passive-active
+  - profile_as_scalar: Flag if a temporal profile outcome is extracted as a single scalar value
+  - missing_space_id: Flag if room_or_space is set but no space_id is linked
+  - missing_baseline_linkage: Flag if an intervention scenario has no baseline_scenario_temp_id
+  - missing_building_case: Flag if building_case_id is null when building cases were extracted
+  - component_missing_evidence: Flag intervention components without evidence_page or evidence_text
+
   Do not correct data unless explicit evidence is available.
   Instead, flag issues and required actions.
 
   Return only JSON following the audit schema.
+
+meta_readiness_audit_prompt: |
+  TASK: Determine whether each extracted outcome/effect is eligible for quantitative synthesis.
+
+  Evaluate each outcome record using the following criteria:
+  - valid scenario linkage (scenario_temp_id matches an extracted scenario)
+  - valid baseline linkage if an effect comparison is required
+  - numeric value present (value is not null)
+  - unit present (unit is not null)
+  - page present (page is not null)
+  - evidence text or table/figure reference present
+  - source type acceptable (text/table preferred; figure_digitized acceptable; figure_visual requires special handling)
+  - extraction method acceptable
+  - human validation status
+  - uncertainty or variance availability (sd, se, ci available?)
+  - outcome is comparable with other studies (standardized metric name exists)
+
+  Classify each record as:
+  - eligible_primary_meta_analysis: meets all criteria, usable for main analysis
+  - eligible_sensitivity_analysis_only: usable but with caveats (e.g., figure visual, no variance)
+  - descriptive_only: can be summarized but not pooled quantitatively
+  - exclude_from_quantitative_synthesis: does not meet minimum criteria
+
+  Provide blocking reasons when not eligible:
+  - no_valid_baseline
+  - no_unit
+  - figure_visual_only (not digitized)
+  - no_numeric_value
+  - profile_without_single_value
+  - scenario_unclear
+  - unsupported_inference
+  - duplicate
+  - wrong_outcome_family
+
+  Return JSON only, following meta_readiness.schema.json.

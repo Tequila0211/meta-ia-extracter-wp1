@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SpaceExtractionOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["document_id", "spaces"],
+  "properties": {
+    "document_id": { "type": "string" },
+    "spaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["space_temp_id", "space_type_standardized", "status"],
+        "properties": {
+          "space_temp_id": { "type": "string" },
+          "building_case_temp_id": { "type": ["string", "null"] },
+          "scenario_temp_id": { "type": ["string", "null"] },
+          "space_name_original": { "type": ["string", "null"] },
+          "space_type_standardized": {
+            "type": ["string", "null"],
+            "enum": [
+              "bedroom", "living_room", "greatroom", "classroom",
+              "office", "courtyard", "whole_building", "test_cell",
+              "corridor", "kitchen", "bathroom",
+              "other", "unclear", null
+            ]
+          },
+          "evaluated_area_m2": { "type": ["number", "null"] },
+          "evaluated_height_m": { "type": ["number", "null"] },
+          "evaluated_volume_m3": { "type": ["number", "null"] },
+          "floor_level": { "type": ["string", "null"] },
+          "orientation": { "type": ["string", "null"] },
+          "window_to_wall_ratio": { "type": ["number", "null"] },
+          "opening_area_m2": { "type": ["number", "null"] },
+          "occupancy_density": { "type": ["string", "null"] },
+          "evidence_page": { "type": ["integer", "null"] },
+          "evidence_text": { "type": ["string", "null"] },
+          "status": {
+            "type": "string",
+            "enum": ["extracted", "not_found", "unclear"]
+          }
+        }
+      }
+    }
+  }
+}

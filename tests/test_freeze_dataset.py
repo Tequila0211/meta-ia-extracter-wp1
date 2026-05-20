@@ -118,7 +118,7 @@ class TestFreezeDataset:
         assert "codebook_version" in manifest
         assert "prompts_version" in manifest
         assert "schemas" in manifest
-        assert len(manifest["schemas"]) == 5
+        assert len(manifest["schemas"]) == 10
         assert "number_of_documents" in manifest
         assert "number_of_validated_outcomes" in manifest
         assert "hash" in manifest

@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BuildingCaseExtractionOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["document_id", "building_cases"],
+  "properties": {
+    "document_id": { "type": "string" },
+    "building_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "building_case_temp_id",
+          "building_typology",
+          "evidence",
+          "status"
+        ],
+        "properties": {
+          "building_case_temp_id": { "type": "string" },
+          "building_case_label": { "type": ["string", "null"] },
+          "building_typology": { "type": ["string", "null"] },
+          "construction_period": { "type": ["string", "null"] },
+          "new_or_existing": {
+            "type": ["string", "null"],
+            "enum": ["new", "existing", "retrofit", "prototype", "unclear", null]
+          },
+          "conditioned_floor_area_m2": { "type": ["number", "null"] },
+          "number_of_floors": { "type": ["number", "null"] },
+          "envelope_description": { "type": ["string", "null"] },
+          "hvac_description": { "type": ["string", "null"] },
+          "passive_features_existing": { "type": ["string", "null"] },
+          "location": { "type": ["string", "null"] },
+          "climate_zone": { "type": ["string", "null"] },
+          "evidence": {
+            "type": "object",
+            "properties": {
+              "page": { "type": ["integer", "null"] },
+              "source_type": { "type": ["string", "null"] },
+              "evidence_text": { "type": ["string", "null"] }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["extracted", "not_found", "unclear"]
+          }
+        }
+      }
+    }
+  }
+}

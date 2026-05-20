@@ -1,7 +1,7 @@
 """
 Article processing workflow.
 
-Implements the full 25-step processing pipeline for a single article (PRD §15).
+Implements the full 10-step processing pipeline for a single article (PRD §15 & Robustecimiento).
 """
 
 from pathlib import Path
@@ -9,10 +9,15 @@ from pathlib import Path
 from rich.console import Console
 
 from src.ai.run_audit import run_audit
+from src.ai.run_building_case_extraction import run_building_case_extraction
 from src.ai.run_classification import run_classification
+from src.ai.run_intervention_component_extraction import run_intervention_component_extraction
 from src.ai.run_mapping import run_mapping
+from src.ai.run_meta_readiness import run_meta_readiness
 from src.ai.run_outcome_extraction import run_outcome_extraction
 from src.ai.run_scenario_extraction import run_scenario_extraction
+from src.ai.run_space_extraction import run_space_extraction
+from src.ai.run_baseline_matching import run_baseline_matching
 from src.database.db import DatabaseManager
 from src.database.repository import (
     get_document_by_code,
@@ -30,16 +35,19 @@ console = Console()
 def process_article(document_code: str) -> dict:
     """Process a single article through the full extraction pipeline.
 
-    Steps (PRD §15):
+    Steps:
     1-2. Verify PDF exists and document is registered
     3. Preprocess if needed
-    4-7. Classification
-    8. Check extractability
-    9-12. Mapping
-    13-15. Scenario extraction
-    16-19. Outcome extraction + evidence + digitization
-    20-22. Audit
-    23-25. Apply blocking rules, mark for review
+    4. Classification
+    5. Mapping
+    6. Building case extraction
+    7. Scenario extraction
+    8. Space extraction
+    9. Intervention component coding
+    10. Outcome extraction
+    11. Baseline matching
+    12. Audit
+    13. Meta-readiness audit
 
     Args:
         document_code: Document code (e.g., 'A001').
@@ -74,7 +82,7 @@ def process_article(document_code: str) -> dict:
 
         # Step 3: Preprocess
         if _needs_step(document_code, "preprocessed"):
-            console.print(f"\n[blue]Step 1/5: Preprocessing {document_code}...[/blue]")
+            console.print(f"\n[blue]Step 1/11: Preprocessing {document_code}...[/blue]")
             try:
                 preprocess_document(document_code)
                 result["steps_completed"].append("preprocessing")
@@ -86,9 +94,9 @@ def process_article(document_code: str) -> dict:
         else:
             result["steps_completed"].append("preprocessing (cached)")
 
-        # Step 4-7: Classification
+        # Step 4: Classification
         if _needs_step(document_code, "classified"):
-            console.print(f"\n[blue]Step 2/5: Classifying {document_code}...[/blue]")
+            console.print(f"\n[blue]Step 2/11: Classifying {document_code}...[/blue]")
             try:
                 cls_result = run_classification(document_code)
                 if not cls_result["success"]:
@@ -106,7 +114,7 @@ def process_article(document_code: str) -> dict:
 
                 result["steps_completed"].append("classification")
 
-                # Step 8: Check extractability
+                # Check extractability
                 cls_data = cls_result["data"]
                 if cls_data and cls_data.get("is_extractable") is False:
                     console.print(f"[yellow]Article {document_code} is not extractable: {cls_data.get('reason')}[/yellow]")
@@ -124,9 +132,9 @@ def process_article(document_code: str) -> dict:
         else:
             result["steps_completed"].append("classification (cached)")
 
-        # Step 9-12: Mapping
+        # Step 5: Mapping
         if _needs_step(document_code, "mapped"):
-            console.print(f"\n[blue]Step 3/5: Mapping {document_code}...[/blue]")
+            console.print(f"\n[blue]Step 3/11: Mapping {document_code}...[/blue]")
             try:
                 map_result = run_mapping(document_code)
                 if not map_result["success"]:
@@ -138,13 +146,43 @@ def process_article(document_code: str) -> dict:
         else:
             result["steps_completed"].append("mapping (cached)")
 
-        # Step 13-15: Scenario extraction
+        # Step 6: Building Case Extraction
+        if _needs_step(document_code, "building_cases_extracted"):
+            console.print(f"\n[blue]Step 4/11: Extracting building cases for {document_code}...[/blue]")
+            try:
+                bc_result = run_building_case_extraction(document_code)
+                if not bc_result["success"]:
+                    result["errors"].append(f"Building case extraction failed: {bc_result['error']}")
+                
+                # Validate schema
+                bc_path = get_document_ai_output_dir(document_code) / "building_case_extraction.json"
+                val = validate_json_file(bc_path, "building_case_extraction.schema.json")
+                if not val:
+                    result["errors"].extend(val.errors)
+                    logger.warning(f"Building case extraction schema validation issues: {val.errors}")
+
+                result["steps_completed"].append("building_case_extraction")
+            except Exception as e:
+                result["errors"].append(f"Building case extraction error: {e}")
+                logger.error(f"Building case extraction error for {document_code}: {e}")
+        else:
+            result["steps_completed"].append("building_case_extraction (cached)")
+
+        # Step 7: Scenario extraction
         if _needs_step(document_code, "scenarios_extracted"):
-            console.print(f"\n[blue]Step 4/5: Extracting scenarios for {document_code}...[/blue]")
+            console.print(f"\n[blue]Step 5/11: Extracting scenarios for {document_code}...[/blue]")
             try:
                 scen_result = run_scenario_extraction(document_code)
                 if not scen_result["success"]:
                     result["errors"].append(f"Scenario extraction failed: {scen_result['error']}")
+                
+                # Validate schema
+                scen_path = get_document_ai_output_dir(document_code) / "scenario_extraction.json"
+                val = validate_json_file(scen_path, "scenario_extraction.schema.json")
+                if not val:
+                    result["errors"].extend(val.errors)
+                    logger.warning(f"Scenario extraction schema validation issues: {val.errors}")
+
                 result["steps_completed"].append("scenario_extraction")
             except Exception as e:
                 result["errors"].append(f"Scenario extraction error: {e}")
@@ -152,9 +190,53 @@ def process_article(document_code: str) -> dict:
         else:
             result["steps_completed"].append("scenario_extraction (cached)")
 
-        # Step 16-20: Outcome extraction + evidence + digitization
+        # Step 8: Space Extraction
+        if _needs_step(document_code, "spaces_extracted"):
+            console.print(f"\n[blue]Step 6/11: Extracting spaces for {document_code}...[/blue]")
+            try:
+                sp_result = run_space_extraction(document_code)
+                if not sp_result["success"]:
+                    result["errors"].append(f"Space extraction failed: {sp_result['error']}")
+                
+                # Validate schema
+                sp_path = get_document_ai_output_dir(document_code) / "space_extraction.json"
+                val = validate_json_file(sp_path, "space_extraction.schema.json")
+                if not val:
+                    result["errors"].extend(val.errors)
+                    logger.warning(f"Space extraction schema validation issues: {val.errors}")
+
+                result["steps_completed"].append("space_extraction")
+            except Exception as e:
+                result["errors"].append(f"Space extraction error: {e}")
+                logger.error(f"Space extraction error for {document_code}: {e}")
+        else:
+            result["steps_completed"].append("space_extraction (cached)")
+
+        # Step 9: Intervention Component Coding
+        if _needs_step(document_code, "components_extracted"):
+            console.print(f"\n[blue]Step 7/11: Coding intervention components for {document_code}...[/blue]")
+            try:
+                comp_result = run_intervention_component_extraction(document_code)
+                if not comp_result["success"]:
+                    result["errors"].append(f"Intervention component coding failed: {comp_result['error']}")
+                
+                # Validate schema
+                comp_path = get_document_ai_output_dir(document_code) / "intervention_component_extraction.json"
+                val = validate_json_file(comp_path, "intervention_component_extraction.schema.json")
+                if not val:
+                    result["errors"].extend(val.errors)
+                    logger.warning(f"Intervention component coding schema validation issues: {val.errors}")
+
+                result["steps_completed"].append("intervention_component_coding")
+            except Exception as e:
+                result["errors"].append(f"Intervention component coding error: {e}")
+                logger.error(f"Intervention component coding error for {document_code}: {e}")
+        else:
+            result["steps_completed"].append("intervention_component_coding (cached)")
+
+        # Step 10: Outcome extraction + evidence + digitization
         if _needs_step(document_code, "outcomes_extracted"):
-            console.print(f"\n[blue]Step 5/5: Extracting outcomes for {document_code}...[/blue]")
+            console.print(f"\n[blue]Step 8/11: Extracting outcomes for {document_code}...[/blue]")
             try:
                 out_result = run_outcome_extraction(document_code)
                 if not out_result["success"]:
@@ -192,9 +274,31 @@ def process_article(document_code: str) -> dict:
         else:
             result["steps_completed"].append("outcome_extraction (cached)")
 
-        # Step 21-23: Audit
+        # Step 11: Baseline Matching
+        if _needs_step(document_code, "baseline_matched"):
+            console.print(f"\n[blue]Step 9/11: Matching baselines for {document_code}...[/blue]")
+            try:
+                bm_result = run_baseline_matching(document_code)
+                if not bm_result["success"]:
+                    result["errors"].append(f"Baseline matching failed: {bm_result['error']}")
+                
+                # Validate schema
+                bm_path = get_document_ai_output_dir(document_code) / "baseline_matching.json"
+                val = validate_json_file(bm_path, "baseline_matching.schema.json")
+                if not val:
+                    result["errors"].extend(val.errors)
+                    logger.warning(f"Baseline matching schema validation issues: {val.errors}")
+
+                result["steps_completed"].append("baseline_matching")
+            except Exception as e:
+                result["errors"].append(f"Baseline matching error: {e}")
+                logger.error(f"Baseline matching error for {document_code}: {e}")
+        else:
+            result["steps_completed"].append("baseline_matching (cached)")
+
+        # Step 12: Audit
         if _needs_step(document_code, "audited"):
-            console.print(f"\n[blue]Running audit for {document_code}...[/blue]")
+            console.print(f"\n[blue]Step 10/11: Running audit for {document_code}...[/blue]")
             try:
                 audit_result = run_audit(document_code)
                 if not audit_result["success"]:
@@ -206,7 +310,29 @@ def process_article(document_code: str) -> dict:
         else:
             result["steps_completed"].append("audit (cached)")
 
-        # Step 24-25: Mark for human review
+        # Step 13: Meta-readiness Audit
+        if _needs_step(document_code, "meta_readiness_audited"):
+            console.print(f"\n[blue]Step 11/11: Running meta-readiness audit for {document_code}...[/blue]")
+            try:
+                mr_result = run_meta_readiness(document_code)
+                if not mr_result["success"]:
+                    result["errors"].append(f"Meta-readiness audit failed: {mr_result['error']}")
+                
+                # Validate schema
+                mr_path = get_document_ai_output_dir(document_code) / "meta_readiness.json"
+                val = validate_json_file(mr_path, "meta_readiness.schema.json")
+                if not val:
+                    result["errors"].extend(val.errors)
+                    logger.warning(f"Meta-readiness audit schema validation issues: {val.errors}")
+
+                result["steps_completed"].append("meta_readiness_audit")
+            except Exception as e:
+                result["errors"].append(f"Meta-readiness audit error: {e}")
+                logger.error(f"Meta-readiness audit error for {document_code}: {e}")
+        else:
+            result["steps_completed"].append("meta_readiness_audit (cached)")
+
+        # Final Verification and Mark for human review
         missing_outputs = _get_missing_required_outputs(document_code)
         if missing_outputs:
             result["errors"].append(
@@ -217,7 +343,7 @@ def process_article(document_code: str) -> dict:
             with DatabaseManager() as session:
                 doc = get_document_by_code(session, document_code)
                 if doc and doc.status not in ("failed", "not_extractable"):
-                    update_document_status(session, doc.id, "needs_human_review", "audit")
+                    update_document_status(session, doc.id, "needs_human_review", "meta_readiness_audit")
             result["final_status"] = "needs_human_review"
 
         if result["errors"]:
@@ -245,8 +371,9 @@ def _needs_step(document_code: str, target_status: str) -> bool:
     """Check if a document needs a specific processing step."""
     status_order = [
         "pending", "preprocessed", "classified", "mapped",
-        "scenarios_extracted", "outcomes_extracted", "audited",
-        "needs_human_review", "validated",
+        "building_cases_extracted", "scenarios_extracted", "spaces_extracted",
+        "components_extracted", "outcomes_extracted", "baseline_matched",
+        "audited", "meta_readiness_audited", "needs_human_review", "validated",
     ]
 
     with DatabaseManager() as session:
@@ -282,9 +409,14 @@ def _has_required_artifact(document_code: str, status: str) -> bool:
     output_map = {
         "classified": "classification.json",
         "mapped": "mapping.json",
+        "building_cases_extracted": "building_case_extraction.json",
         "scenarios_extracted": "scenario_extraction.json",
+        "spaces_extracted": "space_extraction.json",
+        "components_extracted": "intervention_component_extraction.json",
         "outcomes_extracted": "outcome_extraction.json",
+        "baseline_matched": "baseline_matching.json",
         "audited": "audit.json",
+        "meta_readiness_audited": "meta_readiness.json",
     }
 
     output_file = output_map.get(status)
@@ -299,9 +431,14 @@ def _get_missing_required_outputs(document_code: str) -> list[str]:
     required_outputs = [
         "classification.json",
         "mapping.json",
+        "building_case_extraction.json",
         "scenario_extraction.json",
+        "space_extraction.json",
+        "intervention_component_extraction.json",
         "outcome_extraction.json",
+        "baseline_matching.json",
         "audit.json",
+        "meta_readiness.json",
     ]
     output_dir = get_document_ai_output_dir(document_code)
     return [

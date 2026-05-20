@@ -19,6 +19,11 @@ for code in codes:
     conn.execute("DELETE FROM ai_runs WHERE document_id=?", (doc_id,))
     conn.execute("DELETE FROM evidence WHERE document_id=?", (doc_id,))
     conn.execute("DELETE FROM qa_log WHERE document_id=?", (doc_id,))
+    conn.execute("DELETE FROM building_cases WHERE document_id=?", (doc_id,))
+    conn.execute("DELETE FROM spaces WHERE document_id=?", (doc_id,))
+    conn.execute("DELETE FROM intervention_components WHERE document_id=?", (doc_id,))
+    conn.execute("DELETE FROM meta_readiness WHERE document_id=?", (doc_id,))
+    conn.execute("DELETE FROM digitization_tasks WHERE document_id=?", (doc_id,))
     print(f"  {code} reset to preprocessed")
 
 conn.commit()

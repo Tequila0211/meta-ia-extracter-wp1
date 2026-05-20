@@ -55,6 +55,13 @@
             "type": "string",
             "description": "Name of the metric being reported. Use codebook field names when possible: cooling_demand, heating_demand, total_energy_use, carbon_emissions, discomfort_hours, indoor_temperature, MPMV, HIHH, IOD, HE, WBGT, HI, etc."
           },
+          "outcome_standardized_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Controlled name for cross-study comparability. Use codebook field_name when possible."
+          },
           "metric_group": {
             "type": [
               "string",
@@ -94,6 +101,13 @@
             ],
             "description": "Specific room, zone, or spatial unit the value refers to. Examples: 'bedroom', 'greatroom', 'living_room', 'whole_building', 'zone_1'. Null if the value applies to the whole building or is not space-specific."
           },
+          "space_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Temporary ID linking to a space record from space_extraction, if available."
+          },
           "occupant_group": {
             "type": [
               "string",
@@ -115,6 +129,20 @@
             ],
             "description": "The baseline value this outcome is explicitly compared against, if such a comparison exists in the article. Null if no paired comparison is reported."
           },
+          "baseline_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Explicit baseline value when the row represents an intervention effect."
+          },
+          "intervention_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Explicit intervention value when the row represents an intervention effect."
+          },
           "reported_effect_value": {
             "type": [
               "number",
@@ -129,6 +157,35 @@
             ],
             "description": "Unit of the reported effect. Examples: '%', 'kWh/m2', 'hours'. Null if no effect reported."
           },
+          "calculated_effect_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Difference calculated by the AI from baseline_value and intervention_value. Only when both are explicitly present."
+          },
+          "calculated_effect_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["mean_difference", "percent_change", "ratio", "SMD", "not_calculable", null],
+            "description": "Type of calculated effect."
+          },
+          "is_ai_calculated": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True if calculated_effect_value was computed by the AI rather than reported by the article."
+          },
+          "ai_calculation_basis": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Explanation of how the AI calculated the effect, referencing the source values."
+          },
           "effect_direction": {
             "type": "string",
             "enum": [
@@ -140,17 +197,98 @@
             ],
             "description": "Direction of the effect. Use 'not_applicable' when the outcome is a standalone value with no comparison."
           },
+          "effect_direction_standardized": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["beneficial", "harmful", "neutral", "unclear", null],
+            "description": "Standardized direction considering whether higher or lower is better for this metric."
+          },
+          "higher_is_better": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True if higher values are beneficial for this metric (e.g., comfort hours). False if lower is better (e.g., cooling demand, discomfort hours)."
+          },
+          "variance_available": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True if any measure of variance/uncertainty is reported."
+          },
+          "sd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Standard deviation if reported."
+          },
+          "se": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Standard error if reported."
+          },
+          "ci_lower": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Lower bound of confidence interval if reported."
+          },
+          "ci_upper": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Upper bound of confidence interval if reported."
+          },
+          "n": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Sample size if applicable and reported."
+          },
+          "time_period": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["annual", "summer", "winter", "heatwave", "daytime", "nighttime", "other", null],
+            "description": "Time period over which the outcome is measured."
+          },
+          "aggregation_method": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["mean", "max", "min", "median", "cumulative", "hours_above_threshold", "other", null],
+            "description": "How the outcome value was aggregated."
+          },
+          "threshold_definition": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Threshold definition if the outcome is threshold-based. E.g., 'adaptive comfort limit', 'PET > 35°C', 'HI > 105°F'."
+          },
           "extraction_method": {
             "type": "string",
             "enum": [
               "text",
               "table",
+              "figure_digitized",
               "figure_visual_confident",
               "figure_visual_approximate",
               "calculated",
               "not_extracted"
             ],
-            "description": "How the value was obtained. 'text': from article text. 'table': from a data table. 'figure_visual_confident': read from figure with high confidence. 'figure_visual_approximate': read from figure but approximate. 'calculated': derived by calculation. 'not_extracted': value could not be extracted."
+            "description": "How the value was obtained. 'figure_digitized': extracted via digitization tool with calibrated coordinates. 'figure_visual_confident': read from figure with high confidence, only acceptable if figure has explicit numeric labels. 'figure_visual_approximate': read from figure but approximate."
           },
           "confidence": {
             "type": "string",
@@ -205,6 +343,43 @@
           "needs_digitization": {
             "type": "boolean",
             "description": "True ONLY if the value could not be read from a figure and requires manual digitization. If you were able to read the value (even approximately), set to false."
+          },
+          "digitization_required_for_meta": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True if the value needs digitization to be usable in primary meta-analysis."
+          },
+          "digitization_tool": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["WebPlotDigitizer", "manual", "AI", "none", null],
+            "description": "Tool used for digitization, if applicable."
+          },
+          "digitization_error_risk": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": ["low", "medium", "high", null],
+            "description": "Risk level of digitization error."
+          },
+          "usable_for_quantitative_synthesis": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True if this value can be used in the primary quantitative meta-analysis."
+          },
+          "usable_for_sensitivity_only": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True if this value should only be used in sensitivity analyses, not primary."
           },
           "status": {
             "type": "string",

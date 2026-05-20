@@ -1,5 +1,5 @@
 codebook:
-  version: "v02"
+  version: "v03"
   description: "Codebook for AI-assisted extraction of building simulation studies for systematic review/meta-analysis. Supports both classic intervention and factorial simulation designs."
 
 fields:
@@ -170,13 +170,41 @@ fields:
   - field_name: ssp
     entity_level: scenario
     label: "Climate pathway"
-    definition: "Shared Socioeconomic Pathway, RCP, or climate projection scenario identifier."
+    definition: "Shared Socioeconomic Pathway, RCP, or climate projection scenario identifier. MUST be null if the document does not explicitly mention a climate pathway."
     data_type: string
     required: false
     critical: true
     evidence_required: true
     human_validation_required: true
-    extraction_instruction: "Use the identifier as reported (e.g., 'SSP2-4.5', 'SSP5-8.5', 'RCP4.5'). Use 'current' for present-day climate. Null only if not applicable."
+    extraction_instruction: "Use the identifier as reported (e.g., 'SSP2-4.5', 'SSP5-8.5', 'RCP4.5', 'A2'). NEVER use 'current' — if no pathway is reported, set ssp = null and use climate_period_type instead. Null if not applicable."
+
+  - field_name: climate_period_type
+    entity_level: scenario
+    label: "Climate period type"
+    definition: "Indicates whether the scenario evaluates current conditions, future projections, historical data, or heatwave events."
+    data_type: categorical
+    allowed_values:
+      - current
+      - future_projection
+      - historical
+      - heatwave
+      - unclear
+    required: false
+    critical: true
+    evidence_required: true
+    human_validation_required: true
+    extraction_instruction: "Use 'current' for present-day climate conditions. Use 'future_projection' when a climate pathway (SSP/RCP) is applied. Use 'heatwave' for heatwave-specific analyses. This field replaces the former misuse of ssp='current'."
+
+  - field_name: weather_year_or_period
+    entity_level: scenario
+    label: "Weather year or period"
+    definition: "The specific year or range of years used for weather data in the scenario."
+    data_type: string
+    required: false
+    critical: false
+    evidence_required: true
+    human_validation_required: true
+    extraction_instruction: "Use the value as reported: '2020', '2050', '2080', '2001-2020', etc. Null if not reported."
 
   - field_name: operational_mode
     entity_level: scenario
@@ -220,28 +248,40 @@ fields:
   - field_name: intervention_type
     entity_level: intervention
     label: "Intervention type"
-    definition: "Type of strategy evaluated."
+    definition: "Type of strategy evaluated. Uses expanded taxonomy. NEVER use 'passive_design' — use the specific component type instead."
     data_type: categorical
     allowed_values:
+      - not_applicable
+      - baseline
+      - solar_shading
+      - natural_ventilation
+      - night_ventilation
+      - stack_ventilation
+      - evaporative_cooling
+      - misting
+      - thermal_mass
+      - pcm
+      - cool_roof
+      - cool_wall_or_reflective_coating
       - insulation
       - glazing
-      - shading
-      - ventilation
-      - hvac
-      - passive_design
-      - renewable_energy
+      - green_roof
+      - green_wall
+      - courtyard_design
+      - solar_chimney
+      - earth_air_heat_exchanger
       - controls
-      - envelope
-      - package
       - operational_change
-      - not_applicable
+      - active_system_change
+      - passive_package
+      - mixed_passive_active_package
       - other
       - unclear
     required: true
     critical: true
     evidence_required: true
     human_validation_required: true
-    extraction_instruction: "Use 'not_applicable' for scenarios that are not interventions (e.g., baseline scenarios, climate projections, power outages). A power outage should use 'not_applicable' or 'operational_change', NOT 'passive_design'."
+    extraction_instruction: "Use 'not_applicable' for scenarios that are not interventions (e.g., baseline scenarios, climate projections, power outages). NEVER use 'passive_design' — if the intervention is passive, use the specific component type (e.g., solar_shading, natural_ventilation). If a generic passive strategy appears, set human_review_required=true. Misting/fogging/spray MUST be classified as 'misting' or 'evaporative_cooling', NEVER as 'ventilation'."
 
   - field_name: is_package
     entity_level: intervention

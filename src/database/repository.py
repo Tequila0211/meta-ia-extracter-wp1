@@ -11,14 +11,18 @@ from sqlalchemy.orm import Session
 from src.database.models import (
     AIRun,
     ArticleClassification,
+    BuildingCase,
     DigitizationTask,
     Document,
     Evidence,
     HumanReview,
+    InterventionComponent,
+    MetaReadiness,
     Outcome,
     Page,
     QALog,
     Scenario,
+    Space,
 )
 from src.utils.timestamps import now_iso
 
@@ -190,6 +194,48 @@ def insert_classification(
     return cls
 
 
+# ── Building Cases (NEW) ──────────────────────────────────────────────
+
+def insert_building_case(
+    session: Session,
+    document_id: str,
+    building_case_code: str,
+    data: dict[str, Any],
+) -> BuildingCase:
+    """Insert a building case record."""
+    evidence = data.get("evidence", {})
+    bc = BuildingCase(
+        id=generate_id(),
+        document_id=document_id,
+        building_case_code=building_case_code,
+        building_case_temp_id=data.get("building_case_temp_id"),
+        building_case_label=data.get("building_case_label"),
+        building_typology=data.get("building_typology"),
+        construction_period=data.get("construction_period"),
+        new_or_existing=data.get("new_or_existing"),
+        conditioned_floor_area_m2=data.get("conditioned_floor_area_m2"),
+        number_of_floors=data.get("number_of_floors"),
+        envelope_description=data.get("envelope_description"),
+        hvac_description=data.get("hvac_description"),
+        passive_features_existing=data.get("passive_features_existing"),
+        location=data.get("location"),
+        climate_zone=data.get("climate_zone"),
+        evidence_page=evidence.get("page") if isinstance(evidence, dict) else None,
+        evidence_text=evidence.get("evidence_text") if isinstance(evidence, dict) else None,
+        status=data.get("status", "extracted"),
+        created_at=now_iso(),
+        updated_at=now_iso(),
+    )
+    session.add(bc)
+    session.flush()
+    return bc
+
+
+def get_building_cases_for_document(session: Session, document_id: str) -> list[BuildingCase]:
+    """Get all building cases for a document."""
+    return session.query(BuildingCase).filter(BuildingCase.document_id == document_id).all()
+
+
 # ── Scenarios ──────────────────────────────────────────────────────────
 
 def insert_scenario(
@@ -208,18 +254,49 @@ def insert_scenario(
         scenario_family=data.get("scenario_family"),
         year=data.get("year"),
         ssp=data.get("ssp"),
+        climate_period_type=data.get("climate_period_type"),
+        weather_year_or_period=data.get("weather_year_or_period"),
         operational_mode=data.get("operational_mode"),
         building_typology=data.get("building_typology"),
+        building_case_id=data.get("building_case_id"),
         climate_location=data.get("climate_location"),
         climate_zone=data.get("climate_zone"),
         climate_zone_source=data.get("climate_zone_source"),
         weather_file=data.get("weather_file"),
         simulation_software=data.get("simulation_software"),
         baseline_description=data.get("baseline_description"),
+        baseline_scenario_temp_id=data.get("baseline_scenario_temp_id"),
+        is_reference_baseline=_bool_to_int(data.get("is_reference_baseline")),
+        comparison_logic=data.get("comparison_logic"),
+        baseline_compatibility_status=data.get("baseline_compatibility_status"),
         intervention_description=data.get("intervention_description"),
         intervention_type=data.get("intervention_type"),
         is_package=_bool_to_int(data.get("is_package")),
         package_components=json.dumps(data.get("package_components", [])),
+        intervention_package_simple=data.get("intervention_package_simple"),
+        passive_component_count=data.get("passive_component_count"),
+        has_solar_shading=_bool_to_int(data.get("has_solar_shading")),
+        has_external_shading=_bool_to_int(data.get("has_external_shading")),
+        has_internal_shading=_bool_to_int(data.get("has_internal_shading")),
+        has_natural_ventilation=_bool_to_int(data.get("has_natural_ventilation")),
+        has_cross_ventilation=_bool_to_int(data.get("has_cross_ventilation")),
+        has_night_ventilation=_bool_to_int(data.get("has_night_ventilation")),
+        has_stack_ventilation=_bool_to_int(data.get("has_stack_ventilation")),
+        has_high_thermal_mass=_bool_to_int(data.get("has_high_thermal_mass")),
+        has_pcm=_bool_to_int(data.get("has_pcm")),
+        has_cool_roof=_bool_to_int(data.get("has_cool_roof")),
+        has_cool_wall_or_reflective_coating=_bool_to_int(data.get("has_cool_wall_or_reflective_coating")),
+        has_green_roof=_bool_to_int(data.get("has_green_roof")),
+        has_green_wall=_bool_to_int(data.get("has_green_wall")),
+        has_insulation_change=_bool_to_int(data.get("has_insulation_change")),
+        has_glazing_change=_bool_to_int(data.get("has_glazing_change")),
+        has_evaporative_cooling=_bool_to_int(data.get("has_evaporative_cooling")),
+        has_misting=_bool_to_int(data.get("has_misting")),
+        has_solar_chimney=_bool_to_int(data.get("has_solar_chimney")),
+        has_courtyard_strategy=_bool_to_int(data.get("has_courtyard_strategy")),
+        has_earth_air_heat_exchanger=_bool_to_int(data.get("has_earth_air_heat_exchanger")),
+        has_active_system=_bool_to_int(data.get("has_active_system")),
+        active_system_type=data.get("active_system_type"),
         status=data.get("status", "extracted"),
         human_validated=0,
         created_at=now_iso(),
@@ -233,6 +310,91 @@ def insert_scenario(
 def get_scenarios_for_document(session: Session, document_id: str) -> list[Scenario]:
     """Get all scenarios for a document."""
     return session.query(Scenario).filter(Scenario.document_id == document_id).all()
+
+
+# ── Spaces (NEW) ──────────────────────────────────────────────────────
+
+def insert_space(
+    session: Session,
+    document_id: str,
+    space_code: str,
+    data: dict[str, Any],
+) -> Space:
+    """Insert a space record."""
+    space = Space(
+        id=generate_id(),
+        document_id=document_id,
+        space_code=space_code,
+        space_temp_id=data.get("space_temp_id"),
+        building_case_id=data.get("building_case_temp_id"),
+        scenario_id=data.get("scenario_temp_id"),
+        space_name_original=data.get("space_name_original"),
+        space_type_standardized=data.get("space_type_standardized"),
+        evaluated_area_m2=data.get("evaluated_area_m2"),
+        evaluated_height_m=data.get("evaluated_height_m"),
+        evaluated_volume_m3=data.get("evaluated_volume_m3"),
+        floor_level=data.get("floor_level"),
+        orientation=data.get("orientation"),
+        window_to_wall_ratio=data.get("window_to_wall_ratio"),
+        opening_area_m2=data.get("opening_area_m2"),
+        occupancy_density=data.get("occupancy_density"),
+        evidence_page=data.get("evidence_page"),
+        evidence_text=data.get("evidence_text"),
+        status=data.get("status", "extracted"),
+        created_at=now_iso(),
+        updated_at=now_iso(),
+    )
+    session.add(space)
+    session.flush()
+    return space
+
+
+def get_spaces_for_document(session: Session, document_id: str) -> list[Space]:
+    """Get all spaces for a document."""
+    return session.query(Space).filter(Space.document_id == document_id).all()
+
+
+# ── Intervention Components (NEW) ─────────────────────────────────────
+
+def insert_intervention_component(
+    session: Session,
+    document_id: str,
+    component_code: str,
+    data: dict[str, Any],
+    scenario_id: str | None = None,
+) -> InterventionComponent:
+    """Insert an intervention component record."""
+    comp = InterventionComponent(
+        id=generate_id(),
+        document_id=document_id,
+        scenario_id=scenario_id,
+        scenario_temp_id=data.get("scenario_temp_id"),
+        component_code=component_code,
+        component_id=data.get("component_id"),
+        component_family=data.get("component_family"),
+        component_type=data.get("component_type"),
+        component_description_original=data.get("component_description_original"),
+        is_passive=_bool_to_int(data.get("is_passive")),
+        is_active_support=_bool_to_int(data.get("is_active_support")),
+        is_existing_feature=_bool_to_int(data.get("is_existing_feature")),
+        operation_schedule=data.get("operation_schedule"),
+        parameter_value=data.get("parameter_value"),
+        parameter_unit=data.get("parameter_unit"),
+        evidence_page=data.get("evidence_page"),
+        evidence_text=data.get("evidence_text"),
+        confidence=data.get("confidence"),
+        status=data.get("status", "extracted"),
+        created_at=now_iso(),
+        updated_at=now_iso(),
+    )
+    session.add(comp)
+    session.flush()
+    return comp
+
+
+def get_components_for_document(session: Session, document_id: str) -> list[InterventionComponent]:
+    """Get all intervention components for a document."""
+    return session.query(InterventionComponent).filter(InterventionComponent.document_id == document_id).all()
 
 
 # ── Outcomes ───────────────────────────────────────────────────────────
@@ -252,14 +414,33 @@ def insert_outcome(
         outcome_code=outcome_code,
         outcome_temp_id=data.get("outcome_temp_id"),
         outcome_name=data.get("outcome_name"),
+        outcome_standardized_name=data.get("outcome_standardized_name"),
         metric_group=data.get("metric_group"),
         room_or_space=data.get("room_or_space"),
+        space_id=data.get("space_id"),
         occupant_group=data.get("occupant_group"),
         value=data.get("value"),
         unit=data.get("unit"),
+        baseline_value=data.get("baseline_value"),
+        intervention_value=data.get("intervention_value"),
         reported_effect_value=data.get("reported_effect_value"),
         reported_effect_unit=data.get("reported_effect_unit"),
+        calculated_effect_value=data.get("calculated_effect_value"),
+        calculated_effect_type=data.get("calculated_effect_type"),
+        is_ai_calculated=_bool_to_int(data.get("is_ai_calculated")),
+        ai_calculation_basis=data.get("ai_calculation_basis"),
         effect_direction=data.get("effect_direction"),
+        effect_direction_standardized=data.get("effect_direction_standardized"),
+        higher_is_better=_bool_to_int(data.get("higher_is_better")),
+        variance_available=_bool_to_int(data.get("variance_available")),
+        sd=data.get("sd"),
+        se=data.get("se"),
+        ci_lower=data.get("ci_lower"),
+        ci_upper=data.get("ci_upper"),
+        n=data.get("n"),
+        time_period=data.get("time_period"),
+        aggregation_method=data.get("aggregation_method"),
+        threshold_definition=data.get("threshold_definition"),
         extraction_method=data.get("extraction_method"),
         confidence=data.get("confidence"),
         source_type=data.get("source_type"),
@@ -268,6 +449,11 @@ def insert_outcome(
         row_label=data.get("row_label"),
         column_label=data.get("column_label"),
         needs_digitization=_bool_to_int(data.get("needs_digitization", False)),
+        digitization_required_for_meta=_bool_to_int(data.get("digitization_required_for_meta")),
+        digitization_tool=data.get("digitization_tool"),
+        digitization_error_risk=data.get("digitization_error_risk"),
+        usable_for_quantitative_synthesis=_bool_to_int(data.get("usable_for_quantitative_synthesis")),
+        usable_for_sensitivity_only=_bool_to_int(data.get("usable_for_sensitivity_only")),
         status=data.get("status", "extracted"),
         human_validated=0,
         created_at=now_iso(),
@@ -419,6 +605,43 @@ def insert_digitization_task(
 def get_digitization_tasks_for_document(session: Session, document_id: str) -> list[DigitizationTask]:
     """Get all digitization tasks for a document."""
     return session.query(DigitizationTask).filter(DigitizationTask.document_id == document_id).all()
+
+
+# ── Meta-Readiness (NEW) ──────────────────────────────────────────────
+
+def insert_meta_readiness(
+    session: Session,
+    document_id: str,
+    data: dict[str, Any],
+) -> MetaReadiness:
+    """Insert a meta-readiness record."""
+    mr = MetaReadiness(
+        id=generate_id(),
+        document_id=document_id,
+        record_id=data.get("record_id", ""),
+        has_valid_scenario=_bool_to_int(data.get("has_valid_scenario")),
+        has_valid_baseline=_bool_to_int(data.get("has_valid_baseline")),
+        has_numeric_value=_bool_to_int(data.get("has_numeric_value")),
+        has_unit=_bool_to_int(data.get("has_unit")),
+        has_page=_bool_to_int(data.get("has_page")),
+        has_evidence=_bool_to_int(data.get("has_evidence")),
+        source_quality=data.get("source_quality"),
+        human_validated=_bool_to_int(data.get("human_validated", False)),
+        eligible_for_primary_meta_analysis=_bool_to_int(data.get("eligible_for_primary_meta_analysis")),
+        eligible_for_sensitivity_analysis=_bool_to_int(data.get("eligible_for_sensitivity_analysis")),
+        classification=data.get("classification"),
+        blocking_reason=data.get("blocking_reason"),
+        created_at=now_iso(),
+        updated_at=now_iso(),
+    )
+    session.add(mr)
+    session.flush()
+    return mr
+
+
+def get_meta_readiness_for_document(session: Session, document_id: str) -> list[MetaReadiness]:
+    """Get all meta-readiness records for a document."""
+    return session.query(MetaReadiness).filter(MetaReadiness.document_id == document_id).all()
 
 
 # ── Helpers ────────────────────────────────────────────────────────────

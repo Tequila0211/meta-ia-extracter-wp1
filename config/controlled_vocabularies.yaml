@@ -36,19 +36,34 @@ building_typology:
   - other
   - unclear
 
+# Expanded taxonomy per Robustecimiento §2 Problema 2.
+# passive_design is deliberately EXCLUDED as a final category.
+# If the AI uses passive_design, it triggers human_review_required.
 intervention_type:
+  - not_applicable
+  - baseline
+  - solar_shading
+  - natural_ventilation
+  - night_ventilation
+  - stack_ventilation
+  - evaporative_cooling
+  - misting
+  - thermal_mass
+  - pcm
+  - cool_roof
+  - cool_wall_or_reflective_coating
   - insulation
   - glazing
-  - shading
-  - ventilation
-  - hvac
-  - passive_design
-  - renewable_energy
+  - green_roof
+  - green_wall
+  - courtyard_design
+  - solar_chimney
+  - earth_air_heat_exchanger
   - controls
-  - envelope
-  - package
   - operational_change
-  - not_applicable
+  - active_system_change
+  - passive_package
+  - mixed_passive_active_package
   - other
   - unclear
 
@@ -58,6 +73,13 @@ effect_direction:
   - neutral
   - unclear
   - not_applicable
+
+# Standardized effect direction for meta-analysis
+effect_direction_standardized:
+  - beneficial
+  - harmful
+  - neutral
+  - unclear
 
 review_decision:
   - accepted
@@ -75,9 +97,11 @@ metric_group:
   - cost
   - other
 
+# Updated extraction_method with figure_digitized per §2 Problema 7
 extraction_method:
   - text
   - table
+  - figure_digitized
   - figure_visual_confident
   - figure_visual_approximate
   - calculated
@@ -96,3 +120,113 @@ operational_mode:
   - maximum_cooling
   - free_running
   - other
+
+# NEW: Replaces misuse of ssp="current" per §3.2
+climate_period_type:
+  - current
+  - future_projection
+  - historical
+  - heatwave
+  - unclear
+
+# NEW: Baseline comparison logic per §2 Problema 5
+comparison_logic:
+  - same_building_no_intervention
+  - same_year_same_climate
+  - pre_post
+  - factorial_reference
+  - not_applicable
+  - unclear
+
+# NEW: For calculated effect sizes per §2 Problema 6
+calculated_effect_type:
+  - mean_difference
+  - percent_change
+  - ratio
+  - SMD
+  - not_calculable
+
+# NEW: Building case status per §2 Problema 4
+new_or_existing:
+  - new
+  - existing
+  - retrofit
+  - prototype
+  - unclear
+
+# NEW: Space type standardized per §2 Problema 3
+space_type_standardized:
+  - bedroom
+  - living_room
+  - greatroom
+  - classroom
+  - office
+  - courtyard
+  - whole_building
+  - test_cell
+  - corridor
+  - kitchen
+  - bathroom
+  - other
+  - unclear
+
+# NEW: Aggregation method for outcomes per §2 Problema 6
+aggregation_method:
+  - mean
+  - max
+  - min
+  - median
+  - cumulative
+  - hours_above_threshold
+  - other
+
+# NEW: Time period for outcomes per §2 Problema 6
+time_period:
+  - annual
+  - summer
+  - winter
+  - heatwave
+  - daytime
+  - nighttime
+  - other
+
+# NEW: Component family for intervention components per §4
+component_family:
+  - solar_shading
+  - natural_ventilation
+  - evaporative_cooling
+  - thermal_mass
+  - cool_surface
+  - green_infrastructure
+  - envelope
+  - earth_coupling
+  - active_system
+  - controls
+  - other
+
+# NEW: Baseline compatibility status per §2 Problema 5
+baseline_compatibility_status:
+  - valid
+  - partially_valid
+  - invalid
+  - unclear
+
+# NEW: Digitization tool for figure values per §2 Problema 7
+digitization_tool:
+  - WebPlotDigitizer
+  - manual
+  - AI
+  - none
+
+# NEW: Digitization error risk per §2 Problema 7
+digitization_error_risk:
+  - low
+  - medium
+  - high
+
+# NEW: Source quality for meta-readiness per §4
+source_quality:
+  - text
+  - table
+  - figure_digitized
+  - figure_visual

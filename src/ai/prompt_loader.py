@@ -68,7 +68,9 @@ class PromptLoader:
 
         Args:
             task_type: One of 'classification', 'mapping', 'scenario_extraction',
-                       'outcome_extraction', 'audit'.
+                       'outcome_extraction', 'audit', 'building_case_extraction',
+                       'space_extraction', 'intervention_component_coding',
+                       'baseline_matching', 'meta_readiness_audit'.
         """
         key = f"{task_type}_prompt"
         prompt = self.prompts.get(key)
@@ -86,7 +88,17 @@ class PromptLoader:
         prompt = self.get_task_prompt(task_type)
 
         # Add codebook context for tasks that need it
-        if task_type in ("classification", "scenario_extraction", "outcome_extraction"):
+        tasks_with_codebook = (
+            "classification",
+            "scenario_extraction",
+            "outcome_extraction",
+            "building_case_extraction",
+            "space_extraction",
+            "intervention_component_coding",
+            "baseline_matching",
+            "meta_readiness_audit",
+        )
+        if task_type in tasks_with_codebook:
             codebook_context = self._format_codebook_context()
             prompt = f"{prompt}\n\nCODEBOOK DEFINITIONS:\n{codebook_context}"
 
@@ -128,6 +140,11 @@ class PromptLoader:
             "scenario_extraction": "scenario_extraction.schema.json",
             "outcome_extraction": "outcome_extraction.schema.json",
             "audit": "audit.schema.json",
+            "building_case_extraction": "building_case_extraction.schema.json",
+            "space_extraction": "space_extraction.schema.json",
+            "intervention_component_coding": "intervention_component_extraction.schema.json",
+            "baseline_matching": "baseline_matching.schema.json",
+            "meta_readiness_audit": "meta_readiness.schema.json",
         }
         schema_name = schema_map.get(task_type)
         if not schema_name:

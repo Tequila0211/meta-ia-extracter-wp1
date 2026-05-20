@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MetaReadinessOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["document_id", "readiness_records"],
+  "properties": {
+    "document_id": { "type": "string" },
+    "readiness_records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "record_id",
+          "eligible_for_primary_meta_analysis",
+          "eligible_for_sensitivity_analysis"
+        ],
+        "properties": {
+          "record_id": {
+            "type": "string",
+            "description": "outcome_temp_id or effect_id being evaluated."
+          },
+          "has_valid_scenario": { "type": ["boolean", "null"] },
+          "has_valid_baseline": { "type": ["boolean", "null"] },
+          "has_numeric_value": { "type": ["boolean", "null"] },
+          "has_unit": { "type": ["boolean", "null"] },
+          "has_page": { "type": ["boolean", "null"] },
+          "has_evidence": { "type": ["boolean", "null"] },
+          "source_quality": {
+            "type": ["string", "null"],
+            "enum": ["text", "table", "figure_digitized", "figure_visual", null]
+          },
+          "human_validated": { "type": ["boolean", "null"] },
+          "eligible_for_primary_meta_analysis": { "type": "boolean" },
+          "eligible_for_sensitivity_analysis": { "type": "boolean" },
+          "classification": {
+            "type": ["string", "null"],
+            "enum": [
+              "eligible_primary_meta_analysis",
+              "eligible_sensitivity_analysis_only",
+              "descriptive_only",
+              "exclude_from_quantitative_synthesis",
+              null
+            ]
+          },
+          "blocking_reason": {
+            "type": ["string", "null"],
+            "description": "If not eligible: no_valid_baseline, no_unit, figure_visual_only, no_numeric_value, profile_without_single_value, scenario_unclear, unsupported_inference, duplicate, wrong_outcome_family, etc."
+          }
+        }
+      }
+    }
+  }
+}

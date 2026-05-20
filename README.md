@@ -9,15 +9,47 @@ Este proyecto procesa artículos científicos en PDF uno por uno, utilizando la 
 1. Lee PDFs desde una carpeta local.
 2. Registra cada artículo con un identificador estable (A001, A002, ...).
 3. Preprocesa cada PDF (extracción de texto por página + renderizado PNG).
-4. Ejecuta una secuencia controlada de llamadas a Gemini (clasificación, mapeo, escenarios, outcomes, auditoría).
+4. Ejecuta una secuencia controlada de llamadas a Gemini (clasificación, mapeo, casos de construcción, escenarios, espacios, componentes, outcomes, baseline matching, auditoría lógica y meta-readiness).
 5. Obtiene salidas estructuradas en JSON validadas contra schemas.
-6. Valida contra codebook y reglas metodológicas.
-7. Guarda resultados crudos y normalizados en SQLite.
-8. Exporta plantilla de revisión humana en Excel.
-9. Importa correcciones humanas.
-10. Congela datasets validados.
+6. Valida contra codebook y reglas metodológicas (10 reglas complejas).
+7. Guarda resultados crudos y calculados en SQLite.
+8. Exporta plantilla de revisión humana en Excel con 13 hojas interconectadas por IDs legibles.
+9. Importa correcciones humanas directamente a la base de datos.
+10. Congela datasets validados para síntesis cuantitativa.
 
 **La IA actúa como pre-extractor. Todo dato crítico debe ser revisado y validado por humano.**
+
+---
+
+## Protocolo de Revisión Humana (13 Hojas Excel)
+
+El archivo `data/03_human_review/extraction_review.xlsx` es el núcleo de la validación humana. Para asegurar la máxima usabilidad, el sistema ha sido robustecido para evitar IDs del sistema (UUIDs) y en su lugar emplear códigos legibles y trazables entre hojas.
+
+### Hojas de Trabajo y Estructura
+
+| Código y Nombre de Hoja | Propósito | Instrucción para el Revisor Humano |
+|---|---|---|
+| **`00_README`** | Instrucciones y glosario del protocolo. | Lea detenidamente antes de comenzar la revisión de la tanda. |
+| **`01_DOCUMENTS`** | Registro maestro de documentos procesados. | Verifique que el estado sea `needs_human_review` o `validated`. |
+| **`01B_CLASSIFICATIONS`** | Decisiones de inclusión y tipos de estudio. | Confirme si el artículo es verdaderamente simulación/experimental y elegible. |
+| **`02A_BUILDING_CASES`** | Características físicas de los edificios evaluados. | Verifique el tipo, periodo de construcción, área y descripción del HVAC. |
+| **`02_SCENARIOS`** | Configuración de escenarios baseline e intervención. | Evalúe si la IA clasificó correctamente los 21 flags binarios de estrategias pasivas/activas y el tipo de intervención. |
+| **`02B_SPACES`** | Espacios y zonas térmicas detalladas por escenario. | Verifique las dimensiones del espacio, tasas de ocupación y orientación física. |
+| **`02C_INTERVENTION_COMPONENTS`** | Desglose paramétrico de componentes individuales. | Revise los valores físicos de los componentes (ej. espesor de aislamiento, conductividad,スケジュール). |
+| **`03_OUTCOMES`** | Resultados cuantitativos (comfort, temperatura, consumo). | **Hoja Principal de Edición**: Introduzca sus correcciones en `human_value` y `human_unit` si detecta discrepancias con el PDF. |
+| **`03B_EFFECT_SIZES`** | Cálculo determinista de tamaños del efecto (MD, %, Ratio). | No editable. Muestra los efectos calculados bajo reglas fijas para síntesis cuantitativa. |
+| **`04_EVIDENCE`** | Trazabilidad del texto original y número de página. | Utilice los segmentos de texto y el número de página de origen para contrastar rápidamente sin buscar en todo el PDF. |
+| **`05_QA_LOG`** | Registro de violaciones de reglas de validación lógica. | Analice los flags críticos (ej. `misting_classified_as_ventilation`, `active_system_contamination`) para enfocar su revisión. |
+| **`06_HUMAN_REVIEW`** | Registro central de decisiones de auditoría. | Registre formalmente su decisión por campo (`accepted`, `corrected`, `rejected`, `unclear`). |
+| **`07_DIGITIZATION_TASKS`** | Lista de figuras o gráficos que requieren digitalización. | Si la IA marcó `digitization_required_for_meta`, digitalice el gráfico usando herramientas externas (ej. WebPlotDigitizer) y registre los valores aquí. |
+| **`08_META_READINESS`** | Auditoría final de elegibilidad para metaanálisis. | Revise las razones de exclusión cuantitativa en `blocking_reason` antes de exportar el dataset consolidado. |
+
+### Reglas Clave de Trazabilidad por Códigos
+- **Sin UUIDs**: Todas las referencias utilizan códigos como `A001_BC01` (para Building Case), `A001_S01` (para Escenarios), `A001_SP01` (para Espacios) o `A001_S01_C01` (para Componentes).
+- **Relaciones Claras**: La hoja de `03_OUTCOMES` se conecta a `02_SCENARIOS` vía `scenario_code` y a `02B_SPACES` vía `space_code`.
+- **Efectos Deterministas**: Todos los tamaños del efecto (MD - Mean Difference, Porcentaje de Cambio, Ratios) son calculados de forma determinista mediante reglas matemáticas y de dirección (`higher_is_better`), garantizando la neutralidad metodológica.
+
+---
 
 ## Instalación
 
@@ -154,14 +186,6 @@ pytest tests/ -v
 - `data/03_human_review/*`
 - `data/04_frozen_datasets/*`
 - `data/05_logs/*`
-
-## Limitaciones metodológicas
-
-- La IA puede cometer errores de extracción; toda información crítica requiere validación humana.
-- Los valores extraídos de figuras necesitan digitalización manual.
-- El sistema no realiza OCR para PDFs escaneados.
-- No se calculan tamaños de efecto automáticamente a menos que los valores estén explícitamente pareados.
-- Los paquetes de estrategias no se separan sin evidencia explícita.
 
 ## Stack técnico
 

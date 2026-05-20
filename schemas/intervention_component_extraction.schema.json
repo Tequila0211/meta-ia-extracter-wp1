@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InterventionComponentExtractionOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["document_id", "components"],
+  "properties": {
+    "document_id": { "type": "string" },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenario_temp_id",
+          "component_id",
+          "component_family",
+          "component_type",
+          "is_passive",
+          "status"
+        ],
+        "properties": {
+          "scenario_temp_id": {
+            "type": "string",
+            "description": "Links to the scenario this component belongs to."
+          },
+          "component_id": {
+            "type": "string",
+            "description": "Unique ID for this component. Format: {document_code}_{scenario_temp_id}_C01, C02, etc."
+          },
+          "component_family": {
+            "type": ["string", "null"],
+            "enum": [
+              "solar_shading", "natural_ventilation", "evaporative_cooling",
+              "thermal_mass", "cool_surface", "green_infrastructure",
+              "envelope", "earth_coupling", "active_system", "controls", "other", null
+            ],
+            "description": "High-level family the component belongs to."
+          },
+          "component_type": {
+            "type": ["string", "null"],
+            "description": "Specific type: misting, night_ventilation, cool_roof, pcm, green_wall, etc."
+          },
+          "component_description_original": {
+            "type": ["string", "null"],
+            "description": "Original description from the article."
+          },
+          "is_passive": {
+            "type": ["boolean", "null"],
+            "description": "True if this is a passive component."
+          },
+          "is_active_support": {
+            "type": ["boolean", "null"],
+            "description": "True if this component requires active energy input (fans, pumps)."
+          },
+          "is_existing_feature": {
+            "type": ["boolean", "null"],
+            "description": "True if this component is part of the existing baseline building, not an intervention addition."
+          },
+          "operation_schedule": {
+            "type": ["string", "null"],
+            "enum": ["daytime", "nighttime", "24h", "seasonal", "other", null],
+            "description": "When the component operates, if reported."
+          },
+          "parameter_value": {
+            "type": ["number", "null"],
+            "description": "Quantitative parameter if reported (e.g., 24 for hours, 0.3 for U-value)."
+          },
+          "parameter_unit": {
+            "type": ["string", "null"],
+            "description": "Unit of the parameter_value."
+          },
+          "evidence_page": {
+            "type": ["integer", "null"]
+          },
+          "evidence_text": {
+            "type": ["string", "null"]
+          },
+          "confidence": {
+            "type": ["string", "null"],
+            "enum": ["high", "medium", "low", null]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["extracted", "not_found", "unclear"]
+          }
+        }
+      }
+    }
+  }
+}
