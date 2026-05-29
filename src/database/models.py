@@ -34,6 +34,10 @@ class Document(Base):
     file_hash = Column(Text, nullable=False)
     status = Column(Text, nullable=False, default="pending")
     current_step = Column(Text)
+    title = Column(Text)                          # Bibliographic metadata
+    authors = Column(Text)                        # Bibliographic metadata
+    year = Column(Text)                           # Bibliographic metadata
+    journal = Column(Text)                        # Bibliographic metadata
     created_at = Column(Text, nullable=False)
     updated_at = Column(Text, nullable=False)
 

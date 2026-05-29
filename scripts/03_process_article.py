@@ -22,7 +22,8 @@ if __name__ == "__main__":
         if result["errors"]:
             print(f"\nIssues:")
             for err in result["errors"]:
-                print(f"  • {err}")
+                safe_err = str(err).encode("ascii", errors="replace").decode("ascii").replace("?", "-")
+                print(f"  - {safe_err}")
     else:
         print("Specify --document or --interactive")
         sys.exit(1)

@@ -32,6 +32,10 @@ class TestClassificationSchema:
             "reason": "Article contains simulation data.",
             "status": "ready_for_mapping",
             "human_review_required": False,
+            "title": "A Mock Study on Building Performance",
+            "authors": "Jane Doe et al.",
+            "year": "2020",
+            "journal": "Journal of Building Science",
         }
 
     def test_valid_classification_passes(self):

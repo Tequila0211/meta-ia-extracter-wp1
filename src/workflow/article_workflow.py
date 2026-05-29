@@ -111,6 +111,7 @@ def process_article(document_code: str) -> dict:
                 if not val:
                     result["errors"].extend(val.errors)
                     logger.warning(f"Classification schema validation issues: {val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "classification.json", "classification", val.errors)
 
                 result["steps_completed"].append("classification")
 
@@ -131,6 +132,10 @@ def process_article(document_code: str) -> dict:
                 return result
         else:
             result["steps_completed"].append("classification (cached)")
+            cls_path = get_document_ai_output_dir(document_code) / "classification.json"
+            cls_val = validate_json_file(cls_path, "classification.schema.json")
+            if not cls_val:
+                log_schema_errors_to_qa_log(document_code, "classification.json", "classification", cls_val.errors)
 
         # Step 5: Mapping
         if _needs_step(document_code, "mapped"):
@@ -160,6 +165,7 @@ def process_article(document_code: str) -> dict:
                 if not val:
                     result["errors"].extend(val.errors)
                     logger.warning(f"Building case extraction schema validation issues: {val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "building_case_extraction.json", "building_case", val.errors)
 
                 result["steps_completed"].append("building_case_extraction")
             except Exception as e:
@@ -167,6 +173,10 @@ def process_article(document_code: str) -> dict:
                 logger.error(f"Building case extraction error for {document_code}: {e}")
         else:
             result["steps_completed"].append("building_case_extraction (cached)")
+            bc_path = get_document_ai_output_dir(document_code) / "building_case_extraction.json"
+            bc_val = validate_json_file(bc_path, "building_case_extraction.schema.json")
+            if not bc_val:
+                log_schema_errors_to_qa_log(document_code, "building_case_extraction.json", "building_case", bc_val.errors)
 
         # Step 7: Scenario extraction
         if _needs_step(document_code, "scenarios_extracted"):
@@ -182,6 +192,7 @@ def process_article(document_code: str) -> dict:
                 if not val:
                     result["errors"].extend(val.errors)
                     logger.warning(f"Scenario extraction schema validation issues: {val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "scenario_extraction.json", "scenario", val.errors)
 
                 result["steps_completed"].append("scenario_extraction")
             except Exception as e:
@@ -189,6 +200,10 @@ def process_article(document_code: str) -> dict:
                 logger.error(f"Scenario extraction error for {document_code}: {e}")
         else:
             result["steps_completed"].append("scenario_extraction (cached)")
+            scen_path = get_document_ai_output_dir(document_code) / "scenario_extraction.json"
+            scen_val = validate_json_file(scen_path, "scenario_extraction.schema.json")
+            if not scen_val:
+                log_schema_errors_to_qa_log(document_code, "scenario_extraction.json", "scenario", scen_val.errors)
 
         # Step 8: Space Extraction
         if _needs_step(document_code, "spaces_extracted"):
@@ -204,6 +219,7 @@ def process_article(document_code: str) -> dict:
                 if not val:
                     result["errors"].extend(val.errors)
                     logger.warning(f"Space extraction schema validation issues: {val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "space_extraction.json", "space", val.errors)
 
                 result["steps_completed"].append("space_extraction")
             except Exception as e:
@@ -211,6 +227,10 @@ def process_article(document_code: str) -> dict:
                 logger.error(f"Space extraction error for {document_code}: {e}")
         else:
             result["steps_completed"].append("space_extraction (cached)")
+            sp_path = get_document_ai_output_dir(document_code) / "space_extraction.json"
+            sp_val = validate_json_file(sp_path, "space_extraction.schema.json")
+            if not sp_val:
+                log_schema_errors_to_qa_log(document_code, "space_extraction.json", "space", sp_val.errors)
 
         # Step 9: Intervention Component Coding
         if _needs_step(document_code, "components_extracted"):
@@ -226,6 +246,7 @@ def process_article(document_code: str) -> dict:
                 if not val:
                     result["errors"].extend(val.errors)
                     logger.warning(f"Intervention component coding schema validation issues: {val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "intervention_component_extraction.json", "component", val.errors)
 
                 result["steps_completed"].append("intervention_component_coding")
             except Exception as e:
@@ -233,6 +254,10 @@ def process_article(document_code: str) -> dict:
                 logger.error(f"Intervention component coding error for {document_code}: {e}")
         else:
             result["steps_completed"].append("intervention_component_coding (cached)")
+            comp_path = get_document_ai_output_dir(document_code) / "intervention_component_extraction.json"
+            comp_val = validate_json_file(comp_path, "intervention_component_extraction.schema.json")
+            if not comp_val:
+                log_schema_errors_to_qa_log(document_code, "intervention_component_extraction.json", "component", comp_val.errors)
 
         # Step 10: Outcome extraction + evidence + digitization
         if _needs_step(document_code, "outcomes_extracted"):
@@ -259,10 +284,8 @@ def process_article(document_code: str) -> dict:
                 out_val = validate_json_file(out_path, "outcome_extraction.schema.json")
                 if not out_val:
                     result["errors"].extend(out_val.errors)
-                    logger.error(f"Outcome extraction schema validation issues: {out_val.errors}")
-                    _set_failed(document_code)
-                    result["final_status"] = "failed"
-                    return result
+                    logger.warning(f"Outcome extraction schema validation issues: {out_val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "outcome_extraction.json", "outcome", out_val.errors)
 
                 result["steps_completed"].append("outcome_extraction")
             except Exception as e:
@@ -273,6 +296,10 @@ def process_article(document_code: str) -> dict:
                 return result
         else:
             result["steps_completed"].append("outcome_extraction (cached)")
+            out_path = get_document_ai_output_dir(document_code) / "outcome_extraction.json"
+            out_val = validate_json_file(out_path, "outcome_extraction.schema.json")
+            if not out_val:
+                log_schema_errors_to_qa_log(document_code, "outcome_extraction.json", "outcome", out_val.errors)
 
         # Step 11: Baseline Matching
         if _needs_step(document_code, "baseline_matched"):
@@ -288,6 +315,7 @@ def process_article(document_code: str) -> dict:
                 if not val:
                     result["errors"].extend(val.errors)
                     logger.warning(f"Baseline matching schema validation issues: {val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "baseline_matching.json", "baseline_matching", val.errors)
 
                 result["steps_completed"].append("baseline_matching")
             except Exception as e:
@@ -295,6 +323,10 @@ def process_article(document_code: str) -> dict:
                 logger.error(f"Baseline matching error for {document_code}: {e}")
         else:
             result["steps_completed"].append("baseline_matching (cached)")
+            bm_path = get_document_ai_output_dir(document_code) / "baseline_matching.json"
+            bm_val = validate_json_file(bm_path, "baseline_matching.schema.json")
+            if not bm_val:
+                log_schema_errors_to_qa_log(document_code, "baseline_matching.json", "baseline_matching", bm_val.errors)
 
         # Step 12: Audit
         if _needs_step(document_code, "audited"):
@@ -310,6 +342,18 @@ def process_article(document_code: str) -> dict:
         else:
             result["steps_completed"].append("audit (cached)")
 
+        # Autonomous Self-Correction Loop
+        try:
+            from src.workflow.correction_loop import run_self_correction_loop
+            logger.info(f"[{document_code}] Checking if autonomous self-correction is needed...")
+            corrected = run_self_correction_loop(document_code)
+            if corrected:
+                console.print(f"\n[green]Self-Correction Loop completed! Re-running Audit to refresh logs...[/green]")
+                # Re-run audit to reflect corrected values in SQLite and verify resolved issues
+                run_audit(document_code)
+        except Exception as e:
+            logger.error(f"[{document_code}] Error in Autonomous Self-Correction Loop: {e}")
+
         # Step 13: Meta-readiness Audit
         if _needs_step(document_code, "meta_readiness_audited"):
             console.print(f"\n[blue]Step 11/11: Running meta-readiness audit for {document_code}...[/blue]")
@@ -324,6 +368,7 @@ def process_article(document_code: str) -> dict:
                 if not val:
                     result["errors"].extend(val.errors)
                     logger.warning(f"Meta-readiness audit schema validation issues: {val.errors}")
+                    log_schema_errors_to_qa_log(document_code, "meta_readiness.json", "meta_readiness", val.errors)
 
                 result["steps_completed"].append("meta_readiness_audit")
             except Exception as e:
@@ -331,14 +376,42 @@ def process_article(document_code: str) -> dict:
                 logger.error(f"Meta-readiness audit error for {document_code}: {e}")
         else:
             result["steps_completed"].append("meta_readiness_audit (cached)")
+            mr_path = get_document_ai_output_dir(document_code) / "meta_readiness.json"
+            mr_val = validate_json_file(mr_path, "meta_readiness.schema.json")
+            if not mr_val:
+                log_schema_errors_to_qa_log(document_code, "meta_readiness.json", "meta_readiness", mr_val.errors)
 
-        # Final Verification and Mark for human review
+        # Final Verification and Mark for human review: re-validate all outputs
+        # to clear any schema errors that were successfully fixed by the correction loop.
+        final_errors = []
+        output_dir = get_document_ai_output_dir(document_code)
+        
+        validation_map = {
+            "classification.json": "classification.schema.json",
+            "building_case_extraction.json": "building_case_extraction.schema.json",
+            "scenario_extraction.json": "scenario_extraction.schema.json",
+            "space_extraction.json": "space_extraction.schema.json",
+            "intervention_component_extraction.json": "intervention_component_extraction.schema.json",
+            "outcome_extraction.json": "outcome_extraction.schema.json",
+            "baseline_matching.json": "baseline_matching.schema.json",
+            "meta_readiness.json": "meta_readiness.schema.json",
+        }
+        
+        for fname, sname in validation_map.items():
+            fpath = output_dir / fname
+            if fpath.exists():
+                val = validate_json_file(fpath, sname)
+                if not val:
+                    final_errors.extend(val.errors)
+        
         missing_outputs = _get_missing_required_outputs(document_code)
         if missing_outputs:
-            result["errors"].append(
+            final_errors.append(
                 f"Missing required outputs: {', '.join(missing_outputs)}"
             )
-
+            
+        result["errors"] = final_errors
+        
         if not result["errors"] and result["final_status"] not in ("failed", "not_extractable"):
             with DatabaseManager() as session:
                 doc = get_document_by_code(session, document_code)
@@ -350,6 +423,8 @@ def process_article(document_code: str) -> dict:
             result["final_status"] = "failed"
             _set_failed(document_code)
             console.print(f"\n[red]ERROR: {document_code} finished with errors.[/red]")
+            for err in result["errors"]:
+                console.print(f"  [red]- {err}[/red]")
         else:
             console.print(f"\n[green]OK: {document_code} completed.[/green]")
         
@@ -446,3 +521,50 @@ def _get_missing_required_outputs(document_code: str) -> list[str]:
         for output_name in required_outputs
         if not (output_dir / output_name).exists()
     ]
+
+
+def log_schema_errors_to_qa_log(document_code: str, target_file: str, record_type: str, errors: list[str]):
+    """Insert schema validation errors into the qa_log table so the correction loop can resolve them."""
+    import re
+    from sqlalchemy import text
+    from src.database.repository import insert_qa_log, get_document_by_code
+    from src.database.db import DatabaseManager
+    with DatabaseManager() as session:
+        doc = get_document_by_code(session, document_code)
+        if not doc:
+            return
+        
+        # Clear existing schema validation issues for this file first to avoid duplicates
+        session.execute(
+            text("DELETE FROM qa_log WHERE document_id = :doc_id AND record_type = :record_type AND issue_type = 'schema_validation_failed'"),
+            {"doc_id": doc.id, "record_type": record_type}
+        )
+        
+        for err in errors:
+            record_id = target_file
+            match = re.search(r'\(at\s+([^\)]+)\)', err)
+            if match:
+                path_info = match.group(1)
+                parts = [p.strip() for p in re.split(r'→|➔|->|arrows', path_info)]
+                if len(parts) >= 2 and parts[1].isdigit():
+                    idx = parts[1]
+                    if record_type == "outcome":
+                        record_id = f"O{int(idx) + 1:03d}"
+                    elif record_type == "component":
+                        record_id = f"C{int(idx) + 1:02d}"
+                    elif record_type == "scenario":
+                        record_id = f"S{int(idx) + 1:02d}"
+                    elif record_type == "space":
+                        record_id = f"SP{int(idx) + 1:02d}"
+            
+            insert_qa_log(
+                session=session,
+                document_id=doc.id,
+                record_type=record_type,
+                record_id=record_id,
+                severity="high",
+                issue_type="schema_validation_failed",
+                description=err,
+                required_action="Correct the JSON structure and field values to strictly match the schema.",
+            )
+        session.commit()

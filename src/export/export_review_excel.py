@@ -87,6 +87,10 @@ def export_review_excel(output_path: str | Path | None = None) -> Path:
         docs_data = [{
             "document_code": d.document_code,
             "file_name": d.file_name,
+            "title": d.title,
+            "authors": d.authors,
+            "year": d.year,
+            "journal": d.journal,
             "status": d.status,
             "current_step": d.current_step,
             "created_at": d.created_at,
@@ -500,6 +504,9 @@ def export_review_excel(output_path: str | Path | None = None) -> Path:
         pd.DataFrame(dig_data).to_excel(writer, sheet_name="07_DIGITIZATION_TASKS", index=False)
         pd.DataFrame(meta_readiness_data).to_excel(writer, sheet_name="08_META_READINESS", index=False)
 
-    console.print(f"[green]✓[/green] Review Excel exported with 13 sheets: {output_path}")
+    try:
+        console.print(f"[green][OK][/green] Review Excel exported with 13 sheets: {output_path}")
+    except Exception:
+        print(f"[OK] Review Excel exported with 13 sheets: {output_path}")
     logger.info(f"Review Excel exported: {output_path}")
     return output_path

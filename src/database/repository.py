@@ -321,13 +321,54 @@ def insert_space(
     data: dict[str, Any],
 ) -> Space:
     """Insert a space record."""
+    import re
+    
+    # Resolve building_case_id UUID
+    bc_temp_id = data.get("building_case_temp_id")
+    bc_id = None
+    if bc_temp_id:
+        bc = session.query(BuildingCase).filter(
+            BuildingCase.document_id == document_id,
+            BuildingCase.building_case_temp_id == bc_temp_id
+        ).first()
+        if bc:
+            bc_id = bc.id
+        else:
+            bc_id = bc_temp_id
+
+    # Resolve scenario_id UUID
+    scen_temp_id = data.get("scenario_temp_id")
+    scen_id = None
+    if scen_temp_id:
+        scen = session.query(Scenario).filter(
+            Scenario.document_id == document_id,
+            Scenario.scenario_temp_id == scen_temp_id
+        ).first()
+        if scen:
+            scen_id = scen.id
+        else:
+            # Fallback to match prefixes like "S01_baseline"
+            m = re.match(r"^(S\d+)", scen_temp_id)
+            if m:
+                clean_id = m.group(1)
+                scen = session.query(Scenario).filter(
+                    Scenario.document_id == document_id,
+                    Scenario.scenario_temp_id == clean_id
+                ).first()
+                if scen:
+                    scen_id = scen.id
+                else:
+                    scen_id = scen_temp_id
+            else:
+                scen_id = scen_temp_id
+
     space = Space(
         id=generate_id(),
         document_id=document_id,
         space_code=space_code,
         space_temp_id=data.get("space_temp_id"),
-        building_case_id=data.get("building_case_temp_id"),
-        scenario_id=data.get("scenario_temp_id"),
+        building_case_id=bc_id,
+        scenario_id=scen_id,
         space_name_original=data.get("space_name_original"),
         space_type_standardized=data.get("space_type_standardized"),
         evaluated_area_m2=data.get("evaluated_area_m2"),
@@ -364,11 +405,38 @@ def insert_intervention_component(
     scenario_id: str | None = None,
 ) -> InterventionComponent:
     """Insert an intervention component record."""
+    import re
+
+    # Resolve scenario_id UUID
+    scen_temp_id = data.get("scenario_temp_id")
+    if not scenario_id and scen_temp_id:
+        scen = session.query(Scenario).filter(
+            Scenario.document_id == document_id,
+            Scenario.scenario_temp_id == scen_temp_id
+        ).first()
+        if scen:
+            scenario_id = scen.id
+        else:
+            # Fallback to match prefixes like "S01_baseline"
+            m = re.match(r"^(S\d+)", scen_temp_id)
+            if m:
+                clean_id = m.group(1)
+                scen = session.query(Scenario).filter(
+                    Scenario.document_id == document_id,
+                    Scenario.scenario_temp_id == clean_id
+                ).first()
+                if scen:
+                    scenario_id = scen.id
+                else:
+                    scenario_id = scen_temp_id
+            else:
+                scenario_id = scen_temp_id
+
     comp = InterventionComponent(
         id=generate_id(),
         document_id=document_id,
         scenario_id=scenario_id,
-        scenario_temp_id=data.get("scenario_temp_id"),
+        scenario_temp_id=scen_temp_id,
         component_code=component_code,
         component_id=data.get("component_id"),
         component_family=data.get("component_family"),

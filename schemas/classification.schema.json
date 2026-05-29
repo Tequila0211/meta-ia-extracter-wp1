@@ -14,11 +14,39 @@
     "has_multiple_scenarios",
     "reason",
     "status",
-    "human_review_required"
+    "human_review_required",
+    "title",
+    "authors",
+    "year",
+    "journal"
   ],
   "properties": {
     "document_id": {
       "type": "string"
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "authors": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "year": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "journal": {
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "study_type": {
       "type": "string",

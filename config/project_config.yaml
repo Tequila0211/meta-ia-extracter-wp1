@@ -31,9 +31,16 @@ ai:
 
 task_models:
   classification: "fast"
+  building_case_extraction: "fast"
   mapping: "fast"
   scenario_extraction: "fast"
+  space_extraction: "fast"
+  intervention_component_extraction: "fast"
+  intervention_component_coding: "fast"
   outcome_extraction: "fast"
+  baseline_matching: "fast"
+  meta_readiness: "fast"
+  meta_readiness_audit: "fast"
   audit: "fast"
 
 documents:

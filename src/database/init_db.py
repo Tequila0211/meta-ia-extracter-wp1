@@ -19,7 +19,7 @@ def init_database(database_url: str | None = None) -> None:
     engine = get_engine(database_url)
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    console.print("[green]✓[/green] Database initialized successfully (all tables dropped and recreated).")
+    console.print("[green][OK][/green] Database initialized successfully (all tables dropped and recreated).")
     console.print(f"  Tables created: {', '.join(Base.metadata.tables.keys())}")
 
 

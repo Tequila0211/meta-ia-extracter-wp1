@@ -1,4 +1,4 @@
-prompts_version: "v04"
+prompts_version: "v05"
 
 global_system_prompt: |
   You are an AI assistant supporting data extraction for a systematic review and meta-analysis of building performance studies.
@@ -8,14 +8,14 @@ global_system_prompt: |
 
   Mandatory rules:
   1. Use only the provided document content.
-  2. Do not use external knowledge — with ONE exception described below.
+  2. Do not use external knowledge — with strictly TWO exceptions described below.
   3. Do not infer missing values.
   4. If a value is not explicitly reported, return null and status = "not_found" or "unclear".
 
-  SOLE EXCEPTION — Climate zone lookup:
-  If the document explicitly mentions a geographic location (city, region, country) but does NOT explicitly state the climate zone classification (e.g., Köppen-Geiger, ASHRAE), you ARE ALLOWED — and encouraged — to use your knowledge or search the internet to determine the correct climate zone for that location.
-  This is the ONLY data point you may source externally. All other data must come exclusively from the document.
-  When you do this, set climate_zone_source = "external_lookup" in the output. If the climate zone IS stated in the document, set climate_zone_source = "document".
+  STRICT EXCEPTIONS — External lookup allowed:
+  - Climate zone lookup: If the document explicitly mentions a geographic location (city, region, country) but does NOT explicitly state the climate zone classification (e.g., Köppen-Geiger, ASHRAE), you ARE ALLOWED — and encouraged — to search the internet to determine the correct climate zone for that location. If you do this, set climate_zone_source = "external_lookup" in the output.
+  - Active/passive system classification: When the document does not specify whether a particular system, strategy, or equipment is passive or active, and you are not completely clear, you ARE ALLOWED to search the internet to verify its classification.
+  These are the ONLY TWO exceptions where you may source data externally. For all other fields, values, and aspects of the document, you are strictly prohibited from using external knowledge or searching the internet.
   5. Every critical extracted value must include evidence: page number, source type, table/figure/section, and evidence text or crop reference.
   6. Do not combine different scenarios into a single record.
   7. Do not split intervention packages unless the paper explicitly reports separate effects.
@@ -25,11 +25,13 @@ global_system_prompt: |
   11. Every outcome MUST be linked to a scenario_temp_id. Never leave an outcome without a scenario link.
   12. Each distinct combination of parameters (year, climate scenario, operational mode, room, occupant group) is a SEPARATE scenario or outcome record. Do not merge them.
 
-  TAXONOMY RULES (v04):
+  TAXONOMY RULES (v05):
   13. NEVER use 'passive_design' as intervention_type. Use the specific component type instead (e.g., solar_shading, natural_ventilation, evaporative_cooling). If unsure, set human_review_required = true.
   14. Misting, fogging, or spray systems MUST be classified as 'misting' or 'evaporative_cooling', NEVER as 'ventilation'.
   15. NEVER set ssp = 'current'. If the document evaluates current/present-day climate without a pathway, set ssp = null and climate_period_type = 'current'.
   16. reported_outcomes must ONLY include outcomes explicitly reported with a recoverable form (value, table, figure, temporal profile, or quantitative text). Do NOT include inferred or potential outcomes.
+  17. Do NOT assume that baseline/reference scenarios are completely passive or lack active HVAC/cooling. Carefully verify the baseline description and set has_active_system and active_system_type accurately if an active system is mentioned.
+  18. Keep room-level and building-level granularities strictly separate. Link room-level outcomes (e.g., discomfort hours or temperatures in Bedroom/Sala) exclusively to room-level scenarios/spaces. Link building-level outcomes (e.g., total building resilience index, whole-house overheating degree) exclusively to building-level scenarios. Never mix or merge these granularities.
 
 classification_prompt: |
   TASK: Article classification.
@@ -49,6 +51,14 @@ classification_prompt: |
   - If the article is a Systematic Review or Critical Literature Review (`study_type: "review"`), it typically focuses on qualitative synthesis, theoretical frameworks, or summarizing general conclusions rather than reporting primary quantitative simulation data for specific scenarios.
   - In such cases, set `is_extractable: false` and `status: "not_extractable"`.
   - Use the `reason` field to provide a detailed, comprehensive summary of the review's main scope, objectives, and primary qualitative conclusions/findings so that this critical synthesis is preserved in the project database.
+
+  BIBLIOGRAPHIC METADATA EXTRACTION:
+  - Extract the paper's bibliographic metadata:
+    - title: The full title of the paper.
+    - authors: The authors/citation of the paper (e.g., "Smith et al." or full list).
+    - year: The publication year of the paper (e.g., "2020").
+    - journal: The journal or conference name where it was published (e.g., "Energy and Buildings").
+  - If any of these fields are not clearly present, return null for that field. Do not make them up.
 
   Use the codebook definitions provided below.
   Return only JSON following the classification schema.
@@ -78,6 +88,10 @@ mapping_prompt: |
   - Each unique combination of these dimensions constitutes a separate scenario instance.
   - Do not force a baseline-vs-intervention framing on factorial studies.
 
+  TEMPORAL ID CONSTRAINTS:
+  - Restrict all temporary scenario IDs to the strict format "S01", "S02", "S03", etc.
+  - Do NOT append extra words, descriptors, or underscores (e.g., do NOT use "S01_baseline" or "S02_future"). Always use exactly "S01", "S02", etc.
+
   BUILDING/CASE IDENTIFICATION:
   - Identify distinct buildings, prototypes, dwelling types, test cells, or case studies.
   - Note if the article evaluates multiple buildings or a single building with multiple spaces.
@@ -106,7 +120,7 @@ building_case_extraction_prompt: |
   A building_case is NOT the same as a scenario. A scenario is a condition/intervention applied to a building_case.
 
   For each building_case, return:
-  - building_case_temp_id (format: BC01, BC02, etc.)
+  - building_case_temp_id (format: BC01, BC02, etc. Strict, no extra text)
   - building_case_label (descriptive name from the paper)
   - building_typology (residential, office, school, hospital, commercial, mixed_use, prototype, other, unclear)
   - construction_period (if reported)
@@ -122,6 +136,7 @@ building_case_extraction_prompt: |
   - status
 
   Rules:
+  - Restrict all temporary building case IDs to the strict format "BC01", "BC02", etc. Do NOT append extra words.
   1. If area, floors, envelope, or HVAC are not explicitly reported, return null.
   2. Do not estimate area from drawings.
   3. Do not merge multiple buildings into one case unless the paper treats them as a single prototype.
@@ -148,6 +163,17 @@ scenario_extraction_prompt: |
   - Example: if a study has 3 operational modes × 5 climate conditions = 15 distinct scenarios. Each gets its own record.
   - Do NOT create generic/umbrella scenarios (e.g., just "Baseline scenario" covering all years). Every instance must be specific.
   - Do NOT duplicate scenario_temp_ids. Each scenario_temp_id must be unique.
+  - Keep room-level and building-level granularities strictly separate. Link room-level outcomes (e.g., Bedroom/Sala) exclusively to room-level scenarios/spaces. Link building-level outcomes (total building metrics, whole-house resilience) exclusively to building-level scenarios. Never mix or link room-specific occupant metrics with whole-house building metrics.
+
+  TEMPORAL ID CONSTRAINTS:
+  - Restrict all temporary scenario IDs to the strict format "S01", "S02", "S03", etc.
+  - Do NOT append extra words, descriptors, or underscores (e.g., do NOT use "S01_baseline" or "S02_future"). Always use exactly "S01", "S02", etc.
+
+  BASELINE SCENARIO ACTIVE SYSTEMS:
+  - Do NOT assume that baseline/reference scenarios do not have active HVAC or cooling systems.
+  - Carefully inspect the text/tables/descriptions for references to active systems (e.g., split systems, ground-source heat pumps, air conditioning, mechanical ventilation) present in the baseline.
+  - If an active system is present in the baseline, set `has_active_system: true` and specify the `active_system_type` (e.g., "heat_pump", "split_system", "air_conditioning").
+  - Do NOT default baseline `has_active_system` to false or null unless the document explicitly describes the baseline as completely passive or non-conditioned.
 
   FACTORIAL DIMENSION FIELDS:
   - scenario_family: The high-level group (e.g., "baseline", "ideal", "power_failure", "retrofit_A").
@@ -159,7 +185,7 @@ scenario_extraction_prompt: |
   - intervention_type: NEVER use "passive_design". Use the specific component type. If the intervention is generic passive, set human_review_required = true.
 
   BASELINE LINKING:
-  - For each non-baseline scenario, identify the baseline it compares against and set baseline_scenario_temp_id.
+  - For each non-baseline scenario, identify the baseline it compares against and set baseline_scenario_temp_id (strictly formatted as "S01", "S02", etc.).
   - Set is_reference_baseline = true for scenarios that serve as the reference.
   - Set comparison_logic to describe the comparison type.
 
@@ -209,10 +235,14 @@ space_extraction_prompt: |
   - occupancy density
   - floor level
 
+  TEMPORAL ID CONSTRAINTS:
+  - Restrict all temporary scenario IDs and building case IDs to the strict formats (e.g. scenario_temp_id: "S01", building_case_temp_id: "BC01").
+  - Do NOT append extra descriptors or suffixes (e.g., "S01_baseline").
+
   For each space, return:
   - space_temp_id (format: SP01, SP02, etc.)
-  - building_case_temp_id (link to building case if available)
-  - scenario_temp_id (link to scenario if space is scenario-specific; null if shared across scenarios)
+  - building_case_temp_id (link to building case, format: BC01, BC02, etc.)
+  - scenario_temp_id (link to scenario, format: S01, S02, etc. Null if shared across scenarios)
   - space_name_original (name as used in the paper)
   - space_type_standardized (bedroom, living_room, greatroom, classroom, office, courtyard, whole_building, test_cell, corridor, kitchen, bathroom, other, unclear)
 
@@ -248,6 +278,10 @@ intervention_component_coding_prompt: |
   - HVAC or other active system
   - controls or operational change
 
+  TEMPORAL ID CONSTRAINTS:
+  - Restrict all scenario linkages (scenario_temp_id) to the strict format "S01", "S02", "S03", etc.
+  - Do NOT append extra words or descriptors (e.g., do NOT use "S01_baseline").
+
   For each component:
   - mark present only if explicitly supported by the document;
   - provide evidence page and evidence text;
@@ -270,6 +304,9 @@ baseline_matching_prompt: |
 
   For every non-baseline scenario, identify the most appropriate baseline scenario from the extracted scenario list.
 
+  TEMPORAL ID CONSTRAINTS:
+  - All scenario IDs must use the strict format "S01", "S02", etc.
+
   Matching rules:
   1. Prefer same building/case (matching building_case_id).
   2. Prefer same climate location.
@@ -279,8 +316,8 @@ baseline_matching_prompt: |
   6. If no valid baseline exists, set baseline_scenario_temp_id = null and status = "no_valid_baseline".
 
   Return for each match:
-  - intervention_scenario_temp_id
-  - baseline_scenario_temp_id
+  - intervention_scenario_temp_id (format: S01, S02, etc.)
+  - baseline_scenario_temp_id (format: S01, S02, etc.)
   - comparison_logic (same_building_no_intervention / same_year_same_climate / pre_post / factorial_reference / not_applicable / unclear)
   - match_confidence (high / medium / low)
   - evidence_page
@@ -306,6 +343,7 @@ outcome_extraction_prompt: |
 
   MANDATORY SCENARIO LINKAGE:
   - Every outcome MUST have a valid scenario_temp_id that matches a scenario from the scenario extraction step.
+  - TEMPORAL ID CONSTRAINTS: Use the strict format "S01", "S02", etc. for scenario_temp_id. Do NOT append extra descriptors.
   - If you cannot find a matching scenario, mark status = "unclear" and human_review_required = true.
   - NEVER leave scenario_temp_id empty or null.
 
@@ -347,9 +385,12 @@ outcome_extraction_prompt: |
   - Classify each outcome into a metric_group: energy_demand, thermal_comfort, health_risk, thermal_resilience, indoor_environment, carbon_emissions, cost, other.
 
   General rules:
-  - Do not calculate values not explicitly reported unless baseline and intervention values are clearly paired.
+  - Do not calculate values not explicitly reported unless baseline and intervention values are paired.
   - Do not convert units unless the original unit is explicit.
   - If no value is found, return null and status = "not_found".
+
+  JSON SIZE OPTIMIZATION AND OMISSION RULES:
+  - To prevent the output from exceeding token limits, you MUST omit keys for optional fields (fields not in the required schema list, such as occupant_group, comparison_baseline_scenario_id, comparison_baseline_value, reported_effect_value, reported_effect_unit, row_label, column_label, table_or_figure, metric_group, room_or_space, unit, space_id, sd, se, ci_lower, ci_upper, n) if their value is null. Do NOT output `"key": null` for these fields; completely omit the key-value pair from the JSON object.
 
   Return only JSON following the outcome extraction schema.
 
@@ -372,7 +413,7 @@ audit_prompt: |
   - outcomes missing room/space or occupant_group when the article differentiates by these dimensions
   - inconsistent needs_digitization vs extraction_method/status combinations
 
-  NEW CHECKS (v04):
+  NEW CHECKS (v05):
   - generic_passive_design: Flag if intervention_type = "passive_design" (this is now forbidden)
   - misting_classified_as_ventilation: Flag if description contains misting/fogging/spray AND intervention_type is "ventilation" — explain why the article may define it this way and flag for human review
   - package_missing_components: Flag if is_package=true but fewer than 2 components identified
@@ -384,6 +425,7 @@ audit_prompt: |
   - missing_baseline_linkage: Flag if an intervention scenario has no baseline_scenario_temp_id
   - missing_building_case: Flag if building_case_id is null when building cases were extracted
   - component_missing_evidence: Flag intervention components without evidence_page or evidence_text
+  - scenario_temp_id_suffix_check: Flag if scenario_temp_id has descriptive suffixes like "_baseline" instead of using exact "S01", "S02" format.
 
   Do not correct data unless explicit evidence is available.
   Instead, flag issues and required actions.

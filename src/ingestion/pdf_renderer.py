@@ -16,7 +16,7 @@ logger = get_logger("ingestion")
 def render_pages_as_images(
     pdf_path: str | Path,
     output_dir: str | Path,
-    dpi: int = 200,
+    dpi: int = 130,
 ) -> list[dict]:
     """Render each page of a PDF as a PNG image.
 

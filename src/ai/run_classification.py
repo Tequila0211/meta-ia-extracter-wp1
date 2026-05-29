@@ -94,6 +94,14 @@ def run_classification(document_code: str, session=None) -> dict:
         # Insert classification data if successful
         if result["success"] and result["data"]:
             insert_classification(session, doc.id, result["data"])
+            
+            # Save bibliographic metadata
+            classification_data = result["data"]
+            doc.title = classification_data.get("title")
+            doc.authors = classification_data.get("authors")
+            doc.year = classification_data.get("year")
+            doc.journal = classification_data.get("journal")
+            
             update_document_status(session, doc.id, "classified", "classification")
 
         if manage_session:

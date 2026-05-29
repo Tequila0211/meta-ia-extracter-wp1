@@ -58,8 +58,6 @@ def compute_document_effect_sizes(session: Session, document_id: str) -> None:
 
         # Try to resolve baseline value and intervention value
         baseline_val = outcome.baseline_value
-        if baseline_val is None:
-            baseline_val = outcome.comparison_baseline_value
 
         intervention_val = outcome.intervention_value
         if intervention_val is None:

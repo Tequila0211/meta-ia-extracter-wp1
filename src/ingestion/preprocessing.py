@@ -113,12 +113,12 @@ def preprocess_document(document_code: str) -> dict:
         # Step 5: Update document status
         update_document_status(session, doc.id, "preprocessed", "preprocessing")
 
-        console.print(f"[green]✓[/green] {document_code} preprocessed:")
+        console.print(f"[green][OK][/green] {document_code} preprocessed:")
         console.print(f"  Pages: {num_pages}")
         console.print(f"  Total characters: {total_chars}")
         if possible_non_digital:
             console.print(
-                "[yellow]  ⚠ Low text content — possible scanned/non-digital PDF[/yellow]"
+                "[yellow]  [WARNING] Low text content — possible scanned/non-digital PDF[/yellow]"
             )
 
         logger.info(
